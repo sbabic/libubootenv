@@ -1,1 +1,1 @@
-add_library(libubootenv uboot_env.c)
+add_library(ubootenv uboot_env.c)
