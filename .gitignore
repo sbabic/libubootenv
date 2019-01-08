@@ -1,0 +1,28 @@
+#
+# NOTE! Don't add files that are generated in specific
+# subdirectories here. Add them in the ".gitignore" file
+# in that subdirectory instead.
+#
+# Normal rules
+#
+
+*.rej
+*.orig
+*.a
+*.o
+*.su
+*~
+*.swp
+*.patch
+*.so
+.gitignore
+
+CMakeFiles/
+Debug/
+Release/
+src/CMakeFiles/
+src/cmake_install.cmake
+src/fw_printenv
+src/libubootenv.so.*
+src/libubootenv_static.a
+
