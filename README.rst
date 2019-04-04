@@ -36,7 +36,7 @@ is the same as the one described in the U-Boot project.
 License
 -------
 
-libubootenv is licensed under LPGL-2.1
+libubootenv is licensed under LGPL-2.1
 
 OE / Yocto support
 ------------------
