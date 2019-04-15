@@ -8,6 +8,8 @@ set(VERSION	"0.1")
 set(SOVERSION "${VERSION}")
 add_definitions(-DVERSION="${VERSION}")
 
+include("GNUInstallDirs")
+
 #set(CMAKE_C_FLAGS_DEBUG "-g")
 include_directories ("${PROJECT_SOURCE_DIR}/src")
 add_subdirectory (src)
