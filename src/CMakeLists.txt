@@ -14,6 +14,10 @@ add_library(ubootenv SHARED ${libubootenv_SOURCES} ${include_HEADERS})
 set_target_properties(ubootenv PROPERTIES SOVERSION ${SOVERSION})
 
 add_library(ubootenv_static STATIC ${libubootenv_SOURCES} ${include_HEADERS})
+set_target_properties(ubootenv_static PROPERTIES
+  SOVERSION ${SOVERSION} ARCHIVE_OUTPUT_NAME ubootenv
+)
+
 add_executable(fw_printenv fw_printenv.c)
 add_executable(fw_setenv fw_setenv.c)
 target_link_libraries(fw_printenv ubootenv z)
