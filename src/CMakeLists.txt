@@ -24,6 +24,7 @@ target_link_libraries(fw_printenv ubootenv z)
 target_link_libraries(fw_setenv ubootenv z)
 
 install (TARGETS ubootenv DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+install (TARGETS ubootenv_static DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 install (FILES libuboot.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 install (TARGETS fw_printenv DESTINATION "${CMAKE_INSTALL_BINDIR}")
 install (TARGETS fw_setenv DESTINATION "${CMAKE_INSTALL_BINDIR}")
