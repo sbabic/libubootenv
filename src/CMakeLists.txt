@@ -1,19 +1,19 @@
 cmake_minimum_required (VERSION 2.6)
 # Sources and private headers
-SET(libubootenv_SOURCES
+set(libubootenv_SOURCES
   uboot_env.c
   uboot_private.h
 )
 
 # Public headers
-SET(include_HEADERS
+set(include_HEADERS
   libuboot.h
 )
 
 add_library(ubootenv SHARED ${libubootenv_SOURCES} ${include_HEADERS})
-SET_TARGET_PROPERTIES(ubootenv PROPERTIES SOVERSION ${SOVERSION})
+set_target_properties(ubootenv PROPERTIES SOVERSION ${SOVERSION})
 
-ADD_LIBRARY(ubootenv_static STATIC ${libubootenv_SOURCES} ${include_HEADERS})
+add_library(ubootenv_static STATIC ${libubootenv_SOURCES} ${include_HEADERS})
 add_executable(fw_printenv fw_printenv.c)
 add_executable(fw_setenv fw_setenv.c)
 target_link_libraries(fw_printenv ubootenv z)

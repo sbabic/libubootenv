@@ -5,7 +5,7 @@ project (libubootenv C)
 # set (libubootenv_VERSION_MAJOR 1)
 # set (libubootenv_VERSION_MAJOR_VERSION_MINOR 0)
 set(VERSION	"0.1")
-SET(SOVERSION "${VERSION}")
+set(SOVERSION "${VERSION}")
 add_definitions(-DVERSION="${VERSION}")
 
 #set(CMAKE_C_FLAGS_DEBUG "-g")
