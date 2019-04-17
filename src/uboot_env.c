@@ -373,22 +373,30 @@ devwrite_out:
 
 static int set_obsolete_flag(struct uboot_flash_env *dev)
 {
+	uint8_t offsetflags = offsetof(struct uboot_env_redund, flags);
 	unsigned char flag = 0;
 	struct erase_info_user erase;
+	int ret = 0;
 
 	dev->fd = open(dev->devname, O_RDWR);
 	if (dev->fd < 0)
 		return -EBADF;
-	if (lseek(dev->fd, dev->offset, SEEK_SET) < 0) {
+	if (lseek(dev->fd, dev->offset + offsetflags, SEEK_SET) < 0) {
 		close(dev->fd);
 		return -EBADF;
 	}
 	erase.start = dev->offset;
 	erase.length = dev->sectorsize;
 	ioctl(dev->fd, MEMUNLOCK, &erase);
-	if (write(dev->fd, &flag, sizeof(flag)) != sizeof(flag))
-		return -EIO;
+	ret = write(dev->fd, &flag, sizeof(flag));
+	if (ret == sizeof(flag))
+		ret = 0;
+	else if (ret >= 0)
+		ret = -EIO;
+	ioctl (dev->fd, MEMLOCK, &erase);
 	close(dev->fd);
+
+	return ret;
 }
 
 int libuboot_env_store(struct uboot_ctx *ctx)
@@ -400,7 +408,6 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 	bool saveflags = false;
 	size_t size;
 	uint8_t offsetdata;
-	uint8_t offsetflags = offsetof(struct uboot_env_redund, flags);
 	int ret;
 	int copy;
 
