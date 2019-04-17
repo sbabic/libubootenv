@@ -123,7 +123,10 @@ int main (int argc, char **argv) {
 
 	if ((ret = libuboot_open(ctx)) < 0) {
 		fprintf(stderr, "Cannot read environment, using default\n");
-		libuboot_load_file(ctx, defenvfile);
+		if ((ret = libuboot_load_file(ctx, defenvfile)) < 0) {
+			fprintf(stderr, "Cannot read default environment from file\n");
+			exit (ret);
+		}
 	}
 
 	if (!is_setenv) {
