@@ -650,6 +650,8 @@ int libuboot_load_file(struct uboot_ctx *ctx, const char *filename)
 	}
 	fclose(fp);
 	free(buf);
+
+	return 0;
 }
 
 int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
