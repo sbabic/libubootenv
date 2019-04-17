@@ -149,7 +149,7 @@ int main (int argc, char **argv) {
 		}
 	} else { /* setenv branch */
 		if (scriptfile)
-			libuboot_load_file(ctx, defenvfile);
+			libuboot_load_file(ctx, scriptfile);
 		else {
 			for (int i = 0; i < argc; i += 2) {
 				if (i + 1 == argc)
