@@ -59,7 +59,7 @@ int main (int argc, char **argv) {
 	char *cfgfname = NULL;
 	char *defenvfile = NULL;
 	char *scriptfile = NULL;
-	int c;
+	int c, i;
 	int ret = 0;
 	void *tmp;
 	const char *name, *value;
@@ -139,7 +139,7 @@ int main (int argc, char **argv) {
 				fprintf(stdout, "%s=%s\n", name, value);
 			}
 		} else {
-			for (int i = 0; i < argc; i++) {
+			for (i = 0; i < argc; i++) {
 				value = libuboot_get_env(ctx, argv[i]);
 				if (noheader)
 					fprintf(stdout, "%s\n", value ? value : "");
@@ -151,7 +151,7 @@ int main (int argc, char **argv) {
 		if (scriptfile)
 			libuboot_load_file(ctx, scriptfile);
 		else {
-			for (int i = 0; i < argc; i += 2) {
+			for (i = 0; i < argc; i += 2) {
 				if (i + 1 == argc)
 					libuboot_set_env(ctx, argv[i], NULL);
 				else
