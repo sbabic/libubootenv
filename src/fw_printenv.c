@@ -121,6 +121,9 @@ int main (int argc, char **argv) {
 		exit (ret);
 	}
 
+	if (!defenvfile)
+		defenvfile = "/etc/u-boot-initial-env";
+
 	if ((ret = libuboot_open(ctx)) < 0) {
 		fprintf(stderr, "Cannot read environment, using default\n");
 		if ((ret = libuboot_load_file(ctx, defenvfile)) < 0) {
