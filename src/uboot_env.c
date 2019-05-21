@@ -11,6 +11,8 @@
  * @brief This is the implementation of libubootenv library
  *
  */
+ 
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
