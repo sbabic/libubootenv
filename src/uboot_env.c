@@ -32,7 +32,6 @@
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <zlib.h>
-#include <linux/stat.h>
 #include <mtd/mtd-user.h>
 #include <mtd/ubi-user.h>
 
