@@ -507,6 +507,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	uint8_t offsetcrc = offsetof(struct uboot_env_noredund, crc);
 	uint8_t offsetflags = offsetof(struct uboot_env_redund, flags);
 	uint8_t *data;
+	struct var_entry *entry;
 
 	ctx->valid = false;
 
@@ -586,6 +587,8 @@ static int libuboot_load(struct uboot_ctx *ctx)
 
 	data = (uint8_t *)(buf[ctx->current] + offsetdata);
 
+	char *flagsvar = NULL;
+
 	if (ctx->valid) {
 		for (line = data; *line; line = next + 1) {
 			char *name, *value, *tmp;
@@ -606,9 +609,81 @@ static int libuboot_load(struct uboot_ctx *ctx)
 
 			*value++ = '\0';
 
-			libuboot_set_env(ctx, line, value);
+			if (!strcmp(line, ".flags"))
+				flagsvar = strdup(value);
+			else
+				libuboot_set_env(ctx, line, value);
 		}
 	}
+
+	/*
+	 * Parse .flags and set the attributes for a variable
+	 */
+	char *pvar;
+	char *pval;
+	if (flagsvar) {
+#if !defined(NDEBUG)
+	fprintf(stdout, "Environment FLAGS %s\n", flagsvar);
+#endif
+		pvar = flagsvar;
+
+		while (*pvar && (pvar - flagsvar) < strlen(flagsvar)) {
+			char *pnext;
+			pval = strchr(pvar, ':');
+			if (!pval)
+				break;
+
+			*pval++ = '\0';
+			pnext = strchr(pval, ',');
+			if (!pnext)
+				pnext = flagsvar + strlen(flagsvar);
+			else
+				*pnext++ = '\0';
+
+			entry = __libuboot_get_env(&ctx->varlist, pvar);
+			if (entry) {
+				for (int i = 0; i < strlen(pval); i++) {
+					switch (pval[i]) {
+					case 's':
+						entry->type = TYPE_ATTR_STRING;
+						break;
+					case 'd':
+						entry->type = TYPE_ATTR_DECIMAL;
+						break;
+					case 'x':
+						entry->type = TYPE_ATTR_HEX;
+						break;
+					case 'b':
+						entry->type = TYPE_ATTR_BOOL;
+						break;
+					case 'i':
+						entry->type = TYPE_ATTR_IP;
+						break;
+					case 'm':
+						entry->type = TYPE_ATTR_MAC;
+						break;
+					case 'a':
+						entry->access = ACCESS_ATTR_ANY;
+						break;
+					case 'r':
+						entry->access = ACCESS_ATTR_READ_ONLY;
+						break;
+					case 'o':
+						entry->access = ACCESS_ATTR_WRITE_ONCE;
+						break;
+					case 'c':
+						entry->access = ACCESS_ATTR_CHANGE_DEFAULT;
+						break;
+					default: /* ignore it */
+						break;
+					}
+				}
+			}
+
+			pvar = pnext;
+		}
+	}
+	free(flagsvar);
 
 	free(buf[0]);
 
