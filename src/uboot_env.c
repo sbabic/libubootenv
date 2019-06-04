@@ -770,7 +770,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 				&dev->envsectors);
 
 		/*
-		 * At least name ofsset and size shopuld be set
+		 * At least name offset and size should be set
 		 */
 		if (ret < 3 || !tmp)
 			continue;
