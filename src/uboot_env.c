@@ -24,7 +24,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
-#include <pthread.h>
 #include <signal.h>
 #include <sys/file.h>
 #include <sys/types.h>
