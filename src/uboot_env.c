@@ -100,7 +100,7 @@ static char access_tostring(access_attribute a)
 	case ACCESS_ATTR_READ_ONLY:
 		return 'r';
 	case ACCESS_ATTR_WRITE_ONCE:
-		return 'w';
+		return 'o';
 	case ACCESS_ATTR_CHANGE_DEFAULT:
 		return 'c';
 	}
