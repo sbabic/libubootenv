@@ -154,9 +154,7 @@ static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 	if (S_ISCHR(st.st_mode)) {
 		ret = ioctl(fd, MEMGETINFO, &dev->mtdinfo);
 		if (ret < 0 || (dev->mtdinfo.type != MTD_NORFLASH &&
-		    dev->mtdinfo.type != MTD_NANDFLASH &&
-		    dev->mtdinfo.type != MTD_DATAFLASH &&
-		    dev->mtdinfo.type != MTD_UBIVOLUME)) {
+		    dev->mtdinfo.type != MTD_NANDFLASH)) {
 			close(fd);
 			return -EBADF;
 		}
