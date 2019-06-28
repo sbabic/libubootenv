@@ -274,8 +274,8 @@ static int devread(struct uboot_ctx *ctx, unsigned int copy, void *data)
 			start += dev->sectorsize;
 			data += blocksize;
 			count -= blocksize;
+			ret += blocksize;
 		}
-		ret = count;
 		break;
 	}
 
