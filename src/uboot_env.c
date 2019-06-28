@@ -317,6 +317,7 @@ static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
 		erase.length = dev->sectorsize;
 		sectors = dev->envsectors ? dev->envsectors : 1;
 		buf = data;
+		ret = 0;
 
 		while (count > 0) {
 			erase.start = start;
@@ -361,6 +362,7 @@ static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
 			start += dev->sectorsize;
 			buf += blocksize;
 			count -= blocksize;
+			ret += blocksize;
 		}
 		break;
 	}
