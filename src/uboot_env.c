@@ -36,6 +36,8 @@
 
 #include "uboot_private.h"
 
+#define DEVICE_MTD_NAME 		"/dev/mtd"
+
 #define	LIST_FOREACH_SAFE(var, head, field, tvar)			\
 	for ((var) = LIST_FIRST((head));				\
 	    (var) != NULL &&						\
@@ -139,10 +141,26 @@ static void remove_var(struct vars *envs, const char *varname)
 	free_var_entry(envs, entry);
 }
 
+static enum device_type get_device_type(char *device)
+{
+	enum device_type type = DEVICE_NONE;
+
+	if (!strncmp(device, DEVICE_MTD_NAME, strlen(DEVICE_MTD_NAME)))
+		type = DEVICE_MTD;
+	else if (strlen(device) > 0)
+		type = DEVICE_FILE;
+
+	return type;
+}
+
 static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 {
 	int fd, ret;
 	struct stat st;
+
+	dev->device_type = get_device_type(dev->devname);
+	if (dev->device_type == DEVICE_NONE)
+		return -EBADF;
 
 	ret = stat(dev->devname, &st);
 	if (ret < 0)
@@ -152,27 +170,33 @@ static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 		return -EBADF;
 
 	if (S_ISCHR(st.st_mode)) {
-		ret = ioctl(fd, MEMGETINFO, &dev->mtdinfo);
-		if (ret < 0 || (dev->mtdinfo.type != MTD_NORFLASH &&
-		    dev->mtdinfo.type != MTD_NANDFLASH)) {
-			close(fd);
-			return -EBADF;
+		if (dev->device_type == DEVICE_MTD) {
+			ret = ioctl(fd, MEMGETINFO, &dev->mtdinfo);
+			if (ret < 0 || (dev->mtdinfo.type != MTD_NORFLASH &&
+					dev->mtdinfo.type != MTD_NANDFLASH)) {
+				close(fd);
+				return -EBADF;
+			}
 		}
-	} else {
-		dev->mtdinfo.type = MTD_ABSENT;
 	}
 
-	switch (dev->mtdinfo.type ) {
-	case MTD_NORFLASH:
-	case MTD_DATAFLASH: 
-		dev->flagstype = FLAGS_BOOLEAN;
-		break;
-	case MTD_NANDFLASH: 
-	case MTD_UBIVOLUME: 
-	case MTD_ABSENT: 
+	switch (dev->device_type) {
+	case DEVICE_FILE:
 		dev->flagstype = FLAGS_INCREMENTAL;
 		break;
-	}
+	case DEVICE_MTD:
+		switch (dev->mtdinfo.type) {
+		case MTD_NORFLASH:
+			dev->flagstype = FLAGS_BOOLEAN;
+			break;
+		case MTD_NANDFLASH:
+			dev->flagstype = FLAGS_INCREMENTAL;
+		};
+		break;
+	default:
+		close(fd);
+		return -EBADF;
+	};
 
 	close(fd);
 
@@ -205,24 +229,26 @@ static int is_nand_badblock(struct uboot_flash_env *dev, loff_t start)
 	return bad;
 }
 
-static int devread(struct uboot_ctx *ctx, unsigned int copy, void *data)
+static int fileread(struct uboot_flash_env *dev, void *data)
 {
 	int ret;
-	struct uboot_flash_env *dev;
+
+	if (dev->offset)
+		lseek(dev->fd, dev->offset, SEEK_SET);
+
+	ret = read(dev->fd, data, dev->envsize);
+
+	return ret;
+}
+
+static int mtdread(struct uboot_flash_env *dev, void *data)
+{
 	size_t count;
 	size_t blocksize;
 	loff_t start;
 	void *buf;
 	int sectors, skip;
-
-	if (copy > 1)
-		return -EINVAL;
-
-	dev = &ctx->envdevs[copy];
-
-   	dev->fd = open(dev->devname, O_RDONLY);
-   	if (dev->fd < 0)
-    		return -EBADF;
+	int ret = 0;
 
 	switch (dev->mtdinfo.type) {
 	case MTD_ABSENT:
@@ -277,14 +303,54 @@ static int devread(struct uboot_ctx *ctx, unsigned int copy, void *data)
 		break;
 	}
 
+	return ret;
+}
+
+static int devread(struct uboot_ctx *ctx, unsigned int copy, void *data)
+{
+	int ret;
+	struct uboot_flash_env *dev;
+
+	if (copy > 1)
+		return -EINVAL;
+
+	dev = &ctx->envdevs[copy];
+
+	dev->fd = open(dev->devname, O_RDONLY);
+	if (dev->fd < 0)
+		return -EBADF;
+
+	switch (dev->device_type) {
+	case DEVICE_FILE:
+		ret = fileread(dev, data);
+		break;
+	case DEVICE_MTD:
+		ret = mtdread(dev, data);
+		break;
+	default:
+		ret = -1;
+		break;
+	};
+
 	close(dev->fd);
 	return ret;
 }
 
-static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
+static int filewrite(struct uboot_flash_env *dev, void *data)
 {
 	int ret;
-	struct uboot_flash_env *dev;
+
+	if (dev->offset)
+		lseek(dev->fd, dev->offset, SEEK_SET);
+
+	ret = write(dev->fd, data, dev->envsize);
+
+	return ret;
+}
+
+static int mtdwrite(struct uboot_flash_env *dev, void *data)
+{
+	int ret;
 	struct erase_info_user erase;
 	size_t count;
 	size_t blocksize;
@@ -292,21 +358,7 @@ static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
 	void *buf;
 	int sectors, skip;
 
-	if (copy > 1)
-		return -EINVAL;
-
-	dev = &ctx->envdevs[copy];
-
-   	dev->fd = open(dev->devname, O_RDWR);
-   	if (dev->fd < 0)
-    		return -EBADF;
-
 	switch (dev->mtdinfo.type) {
-	case MTD_ABSENT:
-		if (dev->offset)
-			lseek(dev->fd, dev->offset, SEEK_SET);
-		ret = write(dev->fd, data, dev->envsize);
-		break;
 	case MTD_NORFLASH:
 	case MTD_NANDFLASH:
 		count = dev->envsize;
@@ -366,6 +418,35 @@ static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
 	}
 
 devwrite_out:
+	return ret;
+}
+
+static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
+{
+	int ret;
+	struct uboot_flash_env *dev;
+
+	if (copy > 1)
+		return -EINVAL;
+
+	dev = &ctx->envdevs[copy];
+
+	dev->fd = open(dev->devname, O_RDWR);
+	if (dev->fd < 0)
+		return -EBADF;
+
+	switch (dev->device_type) {
+	case DEVICE_FILE:
+		ret = filewrite(dev, data);
+		break;
+	case DEVICE_MTD:
+		ret = mtdwrite(dev, data);
+		break;
+	default:
+		ret = -1;
+		break;
+	};
+
 	close(dev->fd);
 
 	return ret;

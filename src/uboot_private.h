@@ -33,6 +33,13 @@ enum flags_type {
 	FLAGS_INCREMENTAL
 };
 
+enum device_type {
+	DEVICE_NONE,
+	DEVICE_FILE,
+	DEVICE_MTD,
+	DEVICE_UBI,
+};
+
 /**
  * U-Boot environment should always be redundant, but
  * for compatibility reasons a single copy must
@@ -76,6 +83,8 @@ struct uboot_flash_env {
 	unsigned char		flags;
  	/** flags according to device type */
 	enum flags_type		flagstype;
+	/** type of device (mtd, ubi, file, ....) */
+	enum device_type	device_type;
 };
 
 /** Internal structure for an environment variable
