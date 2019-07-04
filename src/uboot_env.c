@@ -37,6 +37,9 @@
 #include "uboot_private.h"
 
 #define DEVICE_MTD_NAME 		"/dev/mtd"
+#define DEVICE_UBI_NAME 		"/dev/ubi"
+#define SYS_UBI_VOLUME_COUNT		"/sys/class/ubi/ubi%d/volumes_count"
+#define SYS_UBI_VOLUME_NAME		"/sys/class/ubi/ubi%d/ubi%d_%d/name"
 
 #define	LIST_FOREACH_SAFE(var, head, field, tvar)			\
 	for ((var) = LIST_FIRST((head));				\
@@ -147,10 +150,138 @@ static enum device_type get_device_type(char *device)
 
 	if (!strncmp(device, DEVICE_MTD_NAME, strlen(DEVICE_MTD_NAME)))
 		type = DEVICE_MTD;
+	else if (!strncmp(device, DEVICE_UBI_NAME, strlen(DEVICE_UBI_NAME)))
+		type = DEVICE_UBI;
 	else if (strlen(device) > 0)
 		type = DEVICE_FILE;
 
 	return type;
+}
+
+static int ubi_get_dev_id(char *device)
+{
+	int dev_id = -1;
+	char *sep;
+
+	sep = rindex(device, 'i');
+	if (sep)
+		sscanf(sep + 1, "%d", &dev_id);
+
+	return dev_id;
+}
+
+static int ubi_get_num_volume(char *device)
+{
+	char filename[DEVNAME_MAX_LENGTH];
+	char data[DEVNAME_MAX_LENGTH];
+	int dev_id, fd, n, num_vol = -1;
+
+	dev_id = ubi_get_dev_id(device);
+	if (dev_id < 0)
+		return -1;
+
+	sprintf(filename, SYS_UBI_VOLUME_COUNT, dev_id);
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
+		return -1;
+
+	n = read(fd, data, sizeof(data));
+	if (n < 0)
+		goto out;
+
+	if (sscanf(data, "%d", &num_vol) != 1)
+		num_vol = -1;
+
+out:
+	close(fd);
+	return num_vol;
+}
+
+static int ubi_get_volume_name(char *device, int vol_id, char vol_name[DEVNAME_MAX_LENGTH])
+{
+	char filename[DEVNAME_MAX_LENGTH];
+	char data[DEVNAME_MAX_LENGTH];
+	int dev_id, fd, n, ret = -1;
+
+	dev_id = ubi_get_dev_id(device);
+	if (dev_id < 0)
+		return -1;
+
+	sprintf(filename, SYS_UBI_VOLUME_NAME, dev_id, dev_id, vol_id);
+	fd = open(filename, O_RDONLY);
+	if (fd < 0)
+		return -1;
+
+	memset(data, 0, DEVNAME_MAX_LENGTH);
+	n = read(fd, data, DEVNAME_MAX_LENGTH);
+	if (n < 0)
+		goto out;
+
+	memset(vol_name, 0, DEVNAME_MAX_LENGTH);
+	if (sscanf(data, "%s", vol_name) != 1)
+		goto out;
+
+	ret = 0;
+
+out:
+	close(fd);
+	return ret;
+}
+
+static int ubi_get_vol_id(char *device, char *volname)
+{
+	int i, ret, num_vol, vol_id = -1;
+
+	num_vol = ubi_get_num_volume(device);
+	if (num_vol < 0)
+		goto out;
+
+	for (i=0; i<num_vol; i++)
+	{
+		char name[DEVNAME_MAX_LENGTH];
+
+		ret = ubi_get_volume_name(device, i, name);
+		if (!ret && !strcmp(name, volname)) {
+			vol_id = i;
+			break;
+		}
+	}
+
+out:
+	return vol_id;
+}
+
+static int ubi_update_name(struct uboot_flash_env *dev)
+{
+	char device[DEVNAME_MAX_LENGTH];
+	char volume[DEVNAME_MAX_LENGTH];
+	int dev_id, vol_id, ret = -EBADF;
+	char *sep;
+
+	sep = index(dev->devname, ':');
+	if (sep)
+	{
+		memset(device, 0, DEVNAME_MAX_LENGTH);
+		memcpy(device, dev->devname, sep - dev->devname);
+
+		memset(volume, 0, DEVNAME_MAX_LENGTH);
+		sscanf(sep + 1, "%s", &volume[0]);
+
+		dev_id = ubi_get_dev_id(device);
+		if (dev_id < 0)
+			goto out;
+
+		vol_id = ubi_get_vol_id(device, volume);
+		if (vol_id < 0)
+			goto out;
+
+		sprintf(dev->devname, "%s_%d", device, vol_id);
+	}
+
+	ret = 0;
+
+out:
+	return ret;
 }
 
 static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
@@ -161,6 +292,12 @@ static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 	dev->device_type = get_device_type(dev->devname);
 	if (dev->device_type == DEVICE_NONE)
 		return -EBADF;
+
+	if (dev->device_type == DEVICE_UBI) {
+		ret = ubi_update_name(dev);
+		if (ret)
+			return ret;
+	}
 
 	ret = stat(dev->devname, &st);
 	if (ret < 0)
@@ -192,6 +329,9 @@ static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 		case MTD_NANDFLASH:
 			dev->flagstype = FLAGS_INCREMENTAL;
 		};
+		break;
+	case DEVICE_UBI:
+		dev->flagstype = FLAGS_INCREMENTAL;
 		break;
 	default:
 		close(fd);
@@ -306,6 +446,15 @@ static int mtdread(struct uboot_flash_env *dev, void *data)
 	return ret;
 }
 
+static int ubiread(struct uboot_flash_env *dev, void *data)
+{
+	int ret = 0;
+
+	ret = read(dev->fd, data, dev->envsize);
+
+	return ret;
+}
+
 static int devread(struct uboot_ctx *ctx, unsigned int copy, void *data)
 {
 	int ret;
@@ -326,6 +475,9 @@ static int devread(struct uboot_ctx *ctx, unsigned int copy, void *data)
 		break;
 	case DEVICE_MTD:
 		ret = mtdread(dev, data);
+		break;
+	case DEVICE_UBI:
+		ret = ubiread(dev, data);
 		break;
 	default:
 		ret = -1;
@@ -421,6 +573,23 @@ devwrite_out:
 	return ret;
 }
 
+static int ubi_update_volume(struct uboot_flash_env *dev)
+{
+	return ioctl(dev->fd, UBI_IOCVOLUP, &dev->envsize);
+}
+
+static int ubiwrite(struct uboot_flash_env *dev, void *data)
+{
+	int ret;
+
+	if (ubi_update_volume(dev) < 0)
+		return -1;
+
+	ret = write(dev->fd, data, dev->envsize);
+
+	return ret;
+}
+
 static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
 {
 	int ret;
@@ -441,6 +610,9 @@ static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
 		break;
 	case DEVICE_MTD:
 		ret = mtdwrite(dev, data);
+		break;
+	case DEVICE_UBI:
+		ret = ubiwrite(dev, data);
 		break;
 	default:
 		ret = -1;
