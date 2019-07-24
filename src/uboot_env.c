@@ -1015,7 +1015,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 		if (line[0] == '#')
 			continue;
 
-		ret = sscanf(line, "%ms %lli %lx %lx %lx",
+		ret = sscanf(line, "%ms %lli %zx %zx %lx",
 				&tmp,
 				&dev->offset,
 				&dev->envsize,
