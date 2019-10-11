@@ -25,4 +25,4 @@ src/cmake_install.cmake
 src/fw_printenv
 src/libubootenv.so.*
 src/libubootenv_static.a
-
+.vscode
