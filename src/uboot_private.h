@@ -8,7 +8,9 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <sys/queue.h>
+#include <mtd/mtd-user.h>
 #include "libuboot.h"
 
 typedef enum {
