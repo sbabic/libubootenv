@@ -488,14 +488,91 @@ static int devread(struct uboot_ctx *ctx, unsigned int copy, void *data)
 	return ret;
 }
 
+static int fileprotect(struct uboot_flash_env *dev, bool on)
+{
+	const char c_sys_path_1[] = "/sys/class/block/";
+	const char c_sys_path_2[] = "/force_ro";
+	const char c_dev_name_1[] = "mmcblk";
+	const char c_dev_name_2[] = "boot";
+	const char c_unprot_char = '0';
+	const char c_prot_char = '1';
+	const char *devfile = dev->devname;
+	int ret = 0;  // 0 means OK, negative means error
+	int ret_int = 0;
+	char *sysfs_path = NULL;
+	int fd_force_ro;
+
+	// Devices without ro flag at /sys/class/block/mmcblk?boot?/force_ro are ignored
+	if (strncmp("/dev/", dev->devname, 5) == 0) {
+		devfile = dev->devname + 5;
+	} else {
+		return ret;
+	}
+
+	ret_int = strncmp(devfile, c_dev_name_1, sizeof(c_dev_name_1) - 1);
+	if (ret_int != 0) {
+		return ret;
+	}
+
+	if (strncmp(devfile + sizeof(c_dev_name_1), c_dev_name_2, sizeof(c_dev_name_2) - 1) != 0) {
+		return ret;
+	}
+
+	if (*(devfile + sizeof(c_dev_name_1) - 1) < '0' ||
+	    *(devfile + sizeof(c_dev_name_1) - 1) > '9') {
+		return ret;
+	}
+
+	if (*(devfile + sizeof(c_dev_name_1) + sizeof(c_dev_name_2) - 1) < '0' ||
+	    *(devfile + sizeof(c_dev_name_1) + sizeof(c_dev_name_2) - 1) > '9') {
+		return ret;
+	}
+
+	// There is a ro flag, the device needs to be protected or unprotected
+	ret_int = asprintf(&sysfs_path, "%s%s%s", c_sys_path_1, devfile, c_sys_path_2);
+	if(ret_int < 0) {
+		ret = -ENOMEM;
+		goto fileprotect_out;
+	}
+
+	if (access(sysfs_path, W_OK) == -1) {
+		goto fileprotect_out;
+	}
+
+	fd_force_ro = open(sysfs_path, O_RDWR);
+	if (fd_force_ro == -1) {
+		ret = -EBADF;
+		goto fileprotect_out;
+	}
+
+	if(on == false){
+		write(fd_force_ro, &c_unprot_char, 1);
+	} else {
+		fsync(dev->fd);
+		write(fd_force_ro, &c_prot_char, 1);
+	}
+	close(fd_force_ro);
+
+fileprotect_out:
+	if(sysfs_path)
+		free(sysfs_path);
+	return ret;
+}
+
 static int filewrite(struct uboot_flash_env *dev, void *data)
 {
 	int ret;
+
+	ret = fileprotect(dev, false);
+	if (ret < 0)
+		return ret;
 
 	if (dev->offset)
 		lseek(dev->fd, dev->offset, SEEK_SET);
 
 	ret = write(dev->fd, data, dev->envsize);
+
+	fileprotect(dev, true);  // no error handling, keep ret from write
 
 	return ret;
 }
