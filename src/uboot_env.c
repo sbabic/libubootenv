@@ -36,6 +36,8 @@
 
 #include "uboot_private.h"
 
+#define UBI_MAX_VOLUME			128
+
 #define DEVICE_MTD_NAME 		"/dev/mtd"
 #define DEVICE_UBI_NAME 		"/dev/ubi"
 #define SYS_UBI_VOLUME_COUNT		"/sys/class/ubi/ubi%d/volumes_count"
@@ -230,13 +232,15 @@ out:
 
 static int ubi_get_vol_id(char *device, char *volname)
 {
-	int i, ret, num_vol, vol_id = -1;
+	int i, n, ret, num_vol, vol_id = -1;
 
 	num_vol = ubi_get_num_volume(device);
 	if (num_vol < 0)
 		goto out;
 
-	for (i=0; i<num_vol; i++)
+	i = 0;
+	n = 0;
+	while ((n < num_vol) && (i < UBI_MAX_VOLUME))
 	{
 		char name[DEVNAME_MAX_LENGTH];
 
@@ -245,6 +249,10 @@ static int ubi_get_vol_id(char *device, char *volname)
 			vol_id = i;
 			break;
 		}
+
+		i++;
+		if (!ret)
+			n++;
 	}
 
 out:
