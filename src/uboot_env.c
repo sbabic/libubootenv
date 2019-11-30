@@ -182,7 +182,7 @@ static int ubi_get_num_volume(char *device)
 	if (dev_id < 0)
 		return -1;
 
-	sprintf(filename, SYS_UBI_VOLUME_COUNT, dev_id);
+	snprintf(filename, sizeof(filename), SYS_UBI_VOLUME_COUNT, dev_id);
 	fd = open(filename, O_RDONLY);
 	if (fd < 0)
 		return -1;
@@ -201,7 +201,7 @@ out:
 
 static int ubi_get_volume_name(char *device, int vol_id, char vol_name[DEVNAME_MAX_LENGTH])
 {
-	char filename[DEVNAME_MAX_LENGTH];
+	char filename[80];
 	char data[DEVNAME_MAX_LENGTH];
 	int dev_id, fd, n, ret = -1;
 
@@ -209,7 +209,7 @@ static int ubi_get_volume_name(char *device, int vol_id, char vol_name[DEVNAME_M
 	if (dev_id < 0)
 		return -1;
 
-	sprintf(filename, SYS_UBI_VOLUME_NAME, dev_id, dev_id, vol_id);
+	snprintf(filename, sizeof(filename), SYS_UBI_VOLUME_NAME, dev_id, dev_id, vol_id);
 	fd = open(filename, O_RDONLY);
 	if (fd < 0)
 		return -1;
@@ -554,10 +554,10 @@ static int fileprotect(struct uboot_flash_env *dev, bool on)
 	}
 
 	if(on == false){
-		write(fd_force_ro, &c_unprot_char, 1);
+		ret_int = write(fd_force_ro, &c_unprot_char, 1);
 	} else {
 		fsync(dev->fd);
-		write(fd_force_ro, &c_prot_char, 1);
+		ret_int = write(fd_force_ro, &c_prot_char, 1);
 	}
 	close(fd_force_ro);
 
