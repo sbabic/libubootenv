@@ -5,6 +5,9 @@
  * SPDX-License-Identifier:     LGPL-2.1-or-later
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #pragma once
 
@@ -153,3 +156,7 @@ const char *libuboot_getname(void *entry);
  * @return pointer to name or NULL
  */
 const char *libuboot_getvalue(void *entry);
+
+#ifdef __cplusplus
+}
+#endif
