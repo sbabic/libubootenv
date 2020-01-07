@@ -23,3 +23,15 @@ install (TARGETS ubootenv DESTINATION lib)
 install (FILES libuboot.h DESTINATION include)
 install (TARGETS fw_printenv DESTINATION bin)
 install (TARGETS fw_setenv DESTINATION bin)
+
+# Handle pkg-config files
+set(prefix      ${CMAKE_INSTALL_PREFIX})
+set(exec_prefix ${CMAKE_INSTALL_PREFIX}/bin)
+set(includedir  ${CMAKE_INSTALL_PREFIX}/include)
+set(libdir      ${CMAKE_INSTALL_PREFIX}/lib)
+
+configure_file(${CMAKE_SOURCE_DIR}/src/libubootenv.pc.in ${CMAKE_BINARY_DIR}/libubootenv.pc @ONLY)
+set(LIBUBOOTENV_PKG_CONFIG_FILES ${CMAKE_BINARY_DIR}/libubootenv.pc)
+message(STATUS "Generate ${LIBUBOOTENV_PKG_CONFIG_FILES}")
+# Install pkg-config files
+install(FILES ${LIBUBOOTENV_PKG_CONFIG_FILES} DESTINATION lib/pkgconfig)
