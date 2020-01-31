@@ -1113,6 +1113,12 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 		if (ret < 3 || !tmp)
 			continue;
 
+		/*
+		 * If size is set but zero, entry is wrong
+		 */
+		if (!dev->envsize)
+			return -EINVAL;
+
 		if (!ctx->size)
 			ctx->size = dev->envsize;
 
