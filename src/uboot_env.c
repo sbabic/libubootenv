@@ -1086,6 +1086,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	int ndev = 0;
 	struct uboot_flash_env *dev;
 	char *tmp;
+	int retval = 0;
 
 	if (!config)
 		return -EINVAL;
@@ -1118,8 +1119,10 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 		/*
 		 * If size is set but zero, entry is wrong
 		 */
-		if (!dev->envsize)
-			return -EINVAL;
+		if (!dev->envsize) {
+			retval = -EINVAL;
+			break;
+		}
 
 		if (!ctx->size)
 			ctx->size = dev->envsize;
@@ -1129,8 +1132,10 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 			free(tmp);
 		}
 
-		if (check_env_device(ctx, dev) < 0)
-			return -EINVAL;
+		if (check_env_device(ctx, dev) < 0) {
+			retval = -EINVAL;
+			break;
+		}
 
 		ndev++;
 		dev++; 
@@ -1138,17 +1143,17 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 		if (ndev >= 2) {
 			ctx->redundant = true;
 			if (check_compatible_devices(ctx) < 0)
-				return -EINVAL;
+				retval = -EINVAL;
 			break;
 		}
 	}
 	if (ndev == 0)
-		return -EINVAL;
+		retval = -EINVAL;
 
 	fclose(fp);
 	free(line);
 
-	return 0;
+	return retval;
 }
 
 static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
