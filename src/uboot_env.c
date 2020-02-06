@@ -322,6 +322,10 @@ static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 				close(fd);
 				return -EBADF;
 			}
+			if (dev->sectorsize == 0) {
+				close(fd);
+				return -EINVAL;
+			}
 		}
 	}
 
@@ -605,7 +609,6 @@ static int mtdwrite(struct uboot_flash_env *dev, void *data)
 		sectors = dev->envsectors ? dev->envsectors : 1;
 		buf = data;
 		ret = 0;
-
 		while (count > 0) {
 			erase.start = start;
 
@@ -684,7 +687,6 @@ static int devwrite(struct uboot_ctx *ctx, unsigned int copy, void *data)
 		return -EINVAL;
 
 	dev = &ctx->envdevs[copy];
-
 	dev->fd = open(dev->devname, O_RDWR);
 	if (dev->fd < 0)
 		return -EBADF;
@@ -1140,6 +1142,8 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 			break;
 		}
 	}
+	if (ndev == 0)
+		return -EINVAL;
 
 	fclose(fp);
 	free(line);
@@ -1202,7 +1206,6 @@ int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *val
 {
 	struct var_entry *entry, *elm, *lastentry;
 	struct vars *envs = &ctx->varlist;
-
 	entry = __libuboot_get_env(envs, varname);
 	if (entry) {
 		if (libuboot_validate_flags(entry, value)) {
@@ -1235,7 +1238,6 @@ int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *val
 		free(entry);
 		return -ENOMEM;
 	}
-
 	lastentry = NULL;
 	LIST_FOREACH(elm, envs, next) {
 		if (strcmp(elm->name, varname) > 0) {
