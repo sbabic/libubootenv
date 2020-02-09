@@ -1068,6 +1068,9 @@ int libuboot_load_file(struct uboot_ctx *ctx, const char *filename)
 
 		name = buf;
 
+		if (!strlen(value))
+			value = NULL;
+
 		libuboot_set_env(ctx, name, value);
 	}
 	fclose(fp);
