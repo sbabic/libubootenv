@@ -1369,6 +1369,7 @@ void libuboot_close(struct uboot_ctx *ctx) {
 			free(e->name);
 		if (e->value)
 			free(e->value);
+		LIST_REMOVE(e, next);
 		free(e);
 	}
 }
