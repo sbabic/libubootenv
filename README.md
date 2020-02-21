@@ -43,7 +43,7 @@ libubootenv is licensed under LGPL-2.1
 OE / Yocto support
 ------------------
 
-Recipe is provided in meta-swupdate layer https://github.com/sbabic/meta-swupdate.git 
+Recipe is provided in openembedded-core layer https://git.openembedded.org/openembedded-core/tree/meta/recipes-bsp/u-boot/
 
 Buildroot support
 -----------------
