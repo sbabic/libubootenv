@@ -357,8 +357,6 @@ static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 
 static bool check_compatible_devices(struct uboot_ctx *ctx)
 {
-	struct uboot_flash_env *dev;
-
 	if (!ctx->redundant)
 		return true;
 
@@ -398,7 +396,6 @@ static int mtdread(struct uboot_flash_env *dev, void *data)
 	size_t count;
 	size_t blocksize;
 	loff_t start;
-	void *buf;
 	int sectors, skip;
 	int ret = 0;
 
@@ -930,7 +927,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 
 	if (ctx->valid) {
 		for (line = data; *line; line = next + 1) {
-			char *name, *value, *tmp;
+			char *value;
 
 			/*
 			 * Search the end of the string pointed by line
@@ -1032,7 +1029,6 @@ static int libuboot_load(struct uboot_ctx *ctx)
 #define LINE_LENGTH 1024
 int libuboot_load_file(struct uboot_ctx *ctx, const char *filename)
 {
-	int fd;
 	FILE *fp;
 	char *buf;
 	char *name, *value;
