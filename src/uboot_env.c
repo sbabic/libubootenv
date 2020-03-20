@@ -323,8 +323,7 @@ static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 				return -EBADF;
 			}
 			if (dev->sectorsize == 0) {
-				close(fd);
-				return -EINVAL;
+				dev->sectorsize = dev->mtdinfo.erasesize;
 			}
 		}
 	}
