@@ -143,7 +143,11 @@ int main (int argc, char **argv) {
 			}
 		} else {
 			for (i = 0; i < argc; i++) {
-				value = libuboot_get_env(ctx, argv[i]);
+				if ((value = libuboot_get_env(ctx, argv[i])) == NULL) {
+					fprintf(stderr, "\"%s\" not defined.\n", argv[i]);
+					ret++;
+				}
+
 				if (noheader)
 					fprintf(stdout, "%s\n", value ? value : "");
 				else
