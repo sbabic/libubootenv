@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <linux/fs.h>
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -348,6 +349,23 @@ static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
 		close(fd);
 		return -EBADF;
 	};
+
+	/*
+	 * Check for negative offsets, treat it as backwards offset
+	 * from the end of the block device
+	 */
+	if (dev->offset < 0) {
+		uint64_t blkdevsize;
+		int rc;
+
+		rc = ioctl(fd, BLKGETSIZE64, &blkdevsize);
+		if (rc < 0) {
+			close(fd);
+			return -EINVAL;
+		}
+
+		dev->offset += blkdevsize;
+	}
 
 	close(fd);
 
