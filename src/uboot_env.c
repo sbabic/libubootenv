@@ -677,7 +677,8 @@ devwrite_out:
 
 static int ubi_update_volume(struct uboot_flash_env *dev)
 {
-	return ioctl(dev->fd, UBI_IOCVOLUP, &dev->envsize);
+	int64_t envsize = dev->envsize;
+	return ioctl(dev->fd, UBI_IOCVOLUP, &envsize);
 }
 
 static int ubiwrite(struct uboot_flash_env *dev, void *data)
