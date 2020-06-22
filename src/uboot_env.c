@@ -1054,7 +1054,10 @@ int libuboot_load_file(struct uboot_ctx *ctx, const char *filename)
 	if (!filename)
 		return -EBADF;
 
-	fp = fopen(filename, "r");
+	if (strcmp(filename, "-") == 0)
+		fp = fdopen(0, "r");
+	else
+		fp = fopen(filename, "r");
 	if (!fp)
 		return -EACCES;
 
