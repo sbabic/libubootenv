@@ -605,7 +605,7 @@ static int filewrite(struct uboot_flash_env *dev, void *data)
 
 static int mtdwrite(struct uboot_flash_env *dev, void *data)
 {
-	int ret;
+	int ret = 0;
 	struct erase_info_user erase;
 	size_t count;
 	size_t blocksize;
@@ -622,7 +622,6 @@ static int mtdwrite(struct uboot_flash_env *dev, void *data)
 		erase.length = dev->sectorsize;
 		sectors = dev->envsectors ? dev->envsectors : 1;
 		buf = data;
-		ret = 0;
 		while (count > 0) {
 			erase.start = start;
 
