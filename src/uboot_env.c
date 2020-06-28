@@ -1371,7 +1371,7 @@ int libuboot_initialize(struct uboot_ctx **out,
 }
 
 int libuboot_open(struct uboot_ctx *ctx) {
-	if (!ctx || !ctx->envdevs)
+	if (!ctx)
 		return -EINVAL;
 	libuboot_lock(ctx);
 
@@ -1381,7 +1381,7 @@ int libuboot_open(struct uboot_ctx *ctx) {
 void libuboot_close(struct uboot_ctx *ctx) {
 	struct var_entry *e, *tmp;
 
-	if (!ctx || !ctx->envdevs)
+	if (!ctx)
 		return;
 	ctx->valid = false;
 	libuboot_unlock(ctx);
