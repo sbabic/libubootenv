@@ -1147,7 +1147,8 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 			ctx->size = dev->envsize;
 
 		if (tmp) {
-			strncpy(dev->devname, tmp, sizeof(dev->devname));
+			memset(dev->devname, 0, sizeof(dev->devname));
+			strncpy(dev->devname, tmp, sizeof(dev->devname) - 1);
 			free(tmp);
 		}
 
@@ -1323,7 +1324,8 @@ int libuboot_configure(struct uboot_ctx *ctx,
 		for (i = 0; i < 2; i++, envdevs++, dev++) {
 			if (!envdevs)
 				break;
-			strncpy(dev->devname, envdevs->devname, sizeof(dev->devname));
+			memset(dev->devname, 0, sizeof(dev->devname));
+			strncpy(dev->devname, envdevs->devname, sizeof(dev->devname) - 1);
 			dev->envsize = envdevs->envsize;
 			dev->sectorsize = envdevs->sectorsize;
 			dev->envsectors = envdevs->envsectors;
