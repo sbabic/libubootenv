@@ -1169,7 +1169,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 
 		if (ndev >= 2) {
 			ctx->redundant = true;
-			if (check_compatible_devices(ctx) < 0)
+			if (!check_compatible_devices(ctx))
 				retval = -EINVAL;
 			break;
 		}
@@ -1342,7 +1342,7 @@ int libuboot_configure(struct uboot_ctx *ctx,
 
 			if (i > 0) {
 				ctx->redundant = true;
-				if (check_compatible_devices(ctx) < 0)
+				if (!check_compatible_devices(ctx))
 					return -EINVAL;
 			}
 		}
