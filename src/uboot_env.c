@@ -442,7 +442,6 @@ static int mtdread(struct uboot_flash_env *dev, void *data)
 		while (count > 0) {
 			skip = is_nand_badblock(dev, start);
 			if (skip < 0) {
-				close(dev->fd);
 				return -EIO;
 			}
 
@@ -460,11 +459,9 @@ static int mtdread(struct uboot_flash_env *dev, void *data)
 				blocksize = count;
 
 			if (lseek(dev->fd, start, SEEK_SET) < 0) {
-				close(dev->fd);
 				return -EIO;
 			}
 			if (read(dev->fd, data, blocksize) != blocksize) {
-				close(dev->fd);
 				return -EIO;
 			}
 			start += dev->sectorsize;
