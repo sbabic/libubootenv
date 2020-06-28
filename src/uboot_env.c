@@ -398,12 +398,13 @@ static int is_nand_badblock(struct uboot_flash_env *dev, loff_t start)
 
 static int fileread(struct uboot_flash_env *dev, void *data)
 {
-	int ret;
+	int ret = 0;
 
 	if (dev->offset)
-		lseek(dev->fd, dev->offset, SEEK_SET);
+		ret = lseek(dev->fd, dev->offset, SEEK_SET);
 
-	ret = read(dev->fd, data, dev->envsize);
+	if (!ret)
+		ret = read(dev->fd, data, dev->envsize);
 
 	return ret;
 }
@@ -420,18 +421,23 @@ static int mtdread(struct uboot_flash_env *dev, void *data)
 	case MTD_ABSENT:
 	case MTD_NORFLASH:
 		if (dev->offset)
-			lseek(dev->fd, dev->offset, SEEK_SET);
+			if (lseek(dev->fd, dev->offset, SEEK_SET) < 0) {
+				ret = -EIO;
+				break;
+			}
 		ret = read(dev->fd, data, dev->envsize);
 		break;
 	case MTD_NANDFLASH:
 		if (dev->offset)
-			lseek(dev->fd, dev->offset, SEEK_SET);
+			if (lseek(dev->fd, dev->offset, SEEK_SET) < 0) {
+				ret = -EIO;
+				break;
+			}
 
 		count = dev->envsize;
 		start = dev->offset;
 		blocksize = dev->envsize;
 		sectors = dev->envsectors ? dev->envsectors : 1;
-		ret = 0;
 
 		while (count > 0) {
 			skip = is_nand_badblock(dev, start);
@@ -587,16 +593,17 @@ fileprotect_out:
 
 static int filewrite(struct uboot_flash_env *dev, void *data)
 {
-	int ret;
+	int ret = 0;
 
 	ret = fileprotect(dev, false);
 	if (ret < 0)
 		return ret;
 
 	if (dev->offset)
-		lseek(dev->fd, dev->offset, SEEK_SET);
+		ret = lseek(dev->fd, dev->offset, SEEK_SET);
 
-	ret = write(dev->fd, data, dev->envsize);
+	if (!ret)
+		ret = write(dev->fd, data, dev->envsize);
 
 	fileprotect(dev, true);  // no error handling, keep ret from write
 
