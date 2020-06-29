@@ -812,6 +812,7 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 						entry->name,
 						attr_tostring(entry->type),
 						access_tostring(entry->access));
+				first = false;
 			}
 		}
 	}
