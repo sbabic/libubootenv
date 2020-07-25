@@ -1242,8 +1242,16 @@ int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *val
 			if (!value) {
 				free_var_entry(envs, entry);
 			} else {
-				free(entry->value);
-				entry->value = strdup(value);
+				if (strcmp(entry->value, value) == 0) {
+#if !defined(NDEBUG)
+					fprintf(stdout, "No change to parameter, old %s, new %s\n",
+						entry->value, value);
+#endif
+					return -EAGAIN;
+				} else {
+					free(entry->value);
+					entry->value = strdup(value);
+				}
 			}
 			return 0;
 		} else {
