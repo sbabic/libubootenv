@@ -151,19 +151,32 @@ int main (int argc, char **argv) {
 			}
 		}
 	} else { /* setenv branch */
-		if (scriptfile)
+		bool need_store = false;
+		if (scriptfile) {
 			libuboot_load_file(ctx, scriptfile);
-		else {
+			need_store = true;
+		} else {
 			for (i = 0; i < argc; i += 2) {
-				if (i + 1 == argc)
-					libuboot_set_env(ctx, argv[i], NULL);
-				else
-					libuboot_set_env(ctx, argv[i], argv[i+1]);
+				value = libuboot_get_env(ctx, argv[i]);
+				if (i + 1 == argc) {
+					if (value != NULL) {
+						libuboot_set_env(ctx, argv[i], NULL);
+						need_store = true;
+					}
+				} else {
+					if (value == NULL || strcmp(value, argv[i+1]) != 0) {
+						libuboot_set_env(ctx, argv[i], argv[i+1]);
+						need_store = true;
+					}
+				}
 			}
 		}
-		ret = libuboot_env_store(ctx);
-		if (ret)
-			fprintf(stderr, "Error storing the env\n");
+
+		if (need_store) {
+			ret = libuboot_env_store(ctx);
+			if (ret)
+				fprintf(stderr, "Error storing the env\n");
+		}
 	}
 
 	libuboot_close(ctx);
