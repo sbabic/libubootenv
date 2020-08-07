@@ -403,8 +403,10 @@ static int fileread(struct uboot_flash_env *dev, void *data)
 	if (dev->offset)
 		ret = lseek(dev->fd, dev->offset, SEEK_SET);
 
-	if (!ret)
-		ret = read(dev->fd, data, dev->envsize);
+	if (ret < 0)
+		return ret;
+
+	ret = read(dev->fd, data, dev->envsize);
 
 	return ret;
 }
@@ -599,8 +601,10 @@ static int filewrite(struct uboot_flash_env *dev, void *data)
 	if (dev->offset)
 		ret = lseek(dev->fd, dev->offset, SEEK_SET);
 
-	if (!ret)
-		ret = write(dev->fd, data, dev->envsize);
+	if (ret < 0)
+		return ret;
+
+	ret = write(dev->fd, data, dev->envsize);
 
 	fileprotect(dev, true);  // no error handling, keep ret from write
 
