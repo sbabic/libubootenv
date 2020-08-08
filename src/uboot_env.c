@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <limits.h>
 #include <linux/fs.h>
 #include <string.h>
 #include <fcntl.h>
@@ -1114,6 +1115,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	int ndev = 0;
 	struct uboot_flash_env *dev;
 	char *tmp;
+	char *path;
 	int retval = 0;
 
 	if (!config)
@@ -1156,9 +1158,16 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 			ctx->size = dev->envsize;
 
 		if (tmp) {
+			if ((path = realpath(tmp, NULL)) == NULL) {
+				free(tmp);
+				retval = -EINVAL;
+				break;
+			}
+
 			memset(dev->devname, 0, sizeof(dev->devname));
-			strncpy(dev->devname, tmp, sizeof(dev->devname) - 1);
+			strncpy(dev->devname, path, sizeof(dev->devname) - 1);
 			free(tmp);
+			free(path);
 		}
 
 		if (check_env_device(ctx, dev) < 0) {
