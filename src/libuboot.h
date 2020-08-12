@@ -13,7 +13,7 @@ extern "C" {
 
 struct uboot_ctx;
 
-#define DEVNAME_MAX_LENGTH	40
+#define DEVNAME_MAX_LENGTH	256
 
 /** Configuration passed in initialization 
  *
