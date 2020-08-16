@@ -5,7 +5,7 @@ project (libubootenv C)
 # set (libubootenv_VERSION_MAJOR 1)
 # set (libubootenv_VERSION_MAJOR_VERSION_MINOR 0)
 set(VERSION	"0.3")
-SET(SOVERSION "${VERSION}")
+SET(SOVERSION "0")
 add_definitions(-DVERSION="${VERSION}")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
