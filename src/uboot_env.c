@@ -268,7 +268,7 @@ static int ubi_update_name(struct uboot_flash_env *dev)
 	int dev_id, vol_id, ret = -EBADF;
 	char *sep;
 
-	sep = index(dev->devname, ':');
+	sep = index(dev->devname, DEVNAME_SEPARATOR);
 	if (sep)
 	{
 		memset(device, 0, DEVNAME_MAX_LENGTH);
@@ -292,6 +292,54 @@ static int ubi_update_name(struct uboot_flash_env *dev)
 
 out:
 	return ret;
+}
+
+static int normalize_device_path(char *path, struct uboot_flash_env *dev)
+{
+	char *sep = NULL, *normalized = NULL;
+	size_t normalized_len = 0, volume_len = 0, output_len = 0;
+
+	/*
+	 * if volume name is present, split into device path and volume
+	 * since only the device path needs normalized
+	 */
+	sep = index(path, DEVNAME_SEPARATOR);
+	if (sep)
+	{
+		volume_len = strlen(sep);
+		*sep = '\0';
+	}
+
+	if ((normalized = realpath(path, NULL)) == NULL)
+	{
+		/* device file didn't exist */
+		return -EINVAL;
+	}
+
+	normalized_len = strlen(normalized);
+	output_len = sizeof(dev->devname) - 1; /* leave room for null */
+	if ((normalized_len + volume_len) > output_len)
+	{
+		/* full name is too long to fit */
+		free(normalized);
+		return -EINVAL;
+	}
+
+	/*
+	 * save normalized path to device file,
+	 * and possibly append separator char & volume name
+	 */
+	memset(dev->devname, 0, sizeof(dev->devname));
+	strncpy(dev->devname, normalized, output_len);
+	free(normalized);
+
+	if (sep)
+	{
+		*sep = DEVNAME_SEPARATOR;
+		strncpy(dev->devname + normalized_len, sep, output_len - normalized_len);
+	}
+
+	return 0;
 }
 
 static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
@@ -1115,7 +1163,6 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	int ndev = 0;
 	struct uboot_flash_env *dev;
 	char *tmp;
-	char *path;
 	int retval = 0;
 
 	if (!config)
@@ -1158,16 +1205,12 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 			ctx->size = dev->envsize;
 
 		if (tmp) {
-			if ((path = realpath(tmp, NULL)) == NULL) {
+			if (normalize_device_path(tmp, dev) < 0) {
 				free(tmp);
 				retval = -EINVAL;
 				break;
 			}
-
-			memset(dev->devname, 0, sizeof(dev->devname));
-			strncpy(dev->devname, path, sizeof(dev->devname) - 1);
 			free(tmp);
-			free(path);
 		}
 
 		if (check_env_device(ctx, dev) < 0) {

@@ -15,6 +15,8 @@ struct uboot_ctx;
 
 #define DEVNAME_MAX_LENGTH	256
 
+#define DEVNAME_SEPARATOR	':'
+
 /** Configuration passed in initialization 
  *
  */
