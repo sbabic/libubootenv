@@ -455,7 +455,22 @@ static int fileread(struct uboot_flash_env *dev, void *data)
 	if (ret < 0)
 		return ret;
 
-	ret = read(dev->fd, data, dev->envsize);
+	size_t remaining = dev->envsize;
+
+	while (1) {
+		ret = read(dev->fd, data, remaining);
+
+		if (ret < 0)
+			break;
+
+		remaining -= ret;
+		data += ret;
+
+		if (!remaining) {
+			ret = dev->envsize;
+			break;
+		}
+	}
 
 	return ret;
 }
@@ -653,7 +668,22 @@ static int filewrite(struct uboot_flash_env *dev, void *data)
 	if (ret < 0)
 		return ret;
 
-	ret = write(dev->fd, data, dev->envsize);
+	size_t remaining = dev->envsize;
+
+	while (1) {
+		ret = write(dev->fd, data, remaining);
+
+		if (ret < 0)
+			break;
+
+		remaining -= ret;
+		data += ret;
+
+		if (!remaining) {
+			ret = dev->envsize;
+			break;
+		}
+	}
 
 	fileprotect(dev, true);  // no error handling, keep ret from write
 
