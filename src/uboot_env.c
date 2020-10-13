@@ -901,6 +901,7 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 				first = false;
 			}
 		}
+		buf++;
 	}
 	*buf++ = '\0';
 
