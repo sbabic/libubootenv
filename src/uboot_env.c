@@ -460,6 +460,9 @@ static int fileread(struct uboot_flash_env *dev, void *data)
 	while (1) {
 		ret = read(dev->fd, data, remaining);
 
+		if (ret == 0 && remaining > 0)
+		    return -1;
+
 		if (ret < 0)
 			break;
 
