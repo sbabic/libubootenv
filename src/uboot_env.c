@@ -1041,7 +1041,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 			 * Search the end of the string pointed by line
 			 */
 			for (next = line; *next; ++next) {
-				if ((next - (char *)data) > ctx->size) {
+				if ((next - (char *)data) > (ctx->size - offsetdata)) {
 					free(buf[0]);
 					return -EIO;
 				}
