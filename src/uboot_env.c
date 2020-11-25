@@ -943,7 +943,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	int ret, i;
 	int copies = 1;
 	void *buf[2];
-	size_t bufsize;
+	size_t bufsize, usable_envsize;
 	struct uboot_flash_env *dev;
 	bool crcenv[2];
 	unsigned char flags[2];
@@ -955,7 +955,8 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	struct var_entry *entry;
 
 	ctx->valid = false;
-
+	usable_envsize = ctx->size - offsetdata;
+    
 	bufsize = ctx->size;
 	if (ctx->redundant) {
 		copies++;
@@ -981,7 +982,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 			return -EIO;
 		}
 		crc = *(uint32_t *)(buf[i] + offsetcrc);
-		dev->crc = crc32(0, (uint8_t *)data, ctx->size - offsetdata);
+		dev->crc = crc32(0, (uint8_t *)data, usable_envsize);
 		crcenv[i] = dev->crc == crc;
 		if (ctx->redundant)
 			dev->flags = *(uint8_t *)(buf[i] + offsetflags);
@@ -1042,7 +1043,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 			 * Search the end of the string pointed by line
 			 */
 			for (next = line; *next; ++next) {
-				if ((next - (char *)data) > ctx->size) {
+				if ((next - (char *)data) > usable_envsize) {
 					free(buf[0]);
 					return -EIO;
 				}
