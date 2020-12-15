@@ -66,6 +66,7 @@ int main (int argc, char **argv) {
 	char *progname;
 	bool is_setenv = false;
 	bool noheader = false;
+	bool default_used = false;
 
 	/*
 	 * As old tool, there is just a tool with symbolic link
@@ -130,6 +131,7 @@ int main (int argc, char **argv) {
 			fprintf(stderr, "Cannot read default environment from file\n");
 			exit (ret);
 		}
+		default_used = true;
 	}
 
 	if (!is_setenv) {
@@ -172,7 +174,7 @@ int main (int argc, char **argv) {
 			}
 		}
 
-		if (need_store) {
+		if (need_store || default_used) {
 			ret = libuboot_env_store(ctx);
 			if (ret)
 				fprintf(stderr, "Error storing the env\n");
