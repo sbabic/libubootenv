@@ -955,7 +955,6 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	struct var_entry *entry;
 
 	ctx->valid = false;
-	usable_envsize = ctx->size - offsetdata;
     
 	bufsize = ctx->size;
 	if (ctx->redundant) {
@@ -964,6 +963,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 		offsetdata = offsetof(struct uboot_env_redund, data);
 		offsetcrc = offsetof(struct uboot_env_redund, crc);
 	}
+	usable_envsize = ctx->size - offsetdata;
 	buf[0] = malloc(bufsize);
 	if (!buf[0])
 		return -ENOMEM;
