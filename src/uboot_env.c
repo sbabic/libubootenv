@@ -1422,9 +1422,13 @@ int libuboot_configure(struct uboot_ctx *ctx,
 				break;
 			memset(dev->devname, 0, sizeof(dev->devname));
 			strncpy(dev->devname, envdevs->devname, sizeof(dev->devname) - 1);
+			dev->offset = envdevs->offset;
 			dev->envsize = envdevs->envsize;
 			dev->sectorsize = envdevs->sectorsize;
 			dev->envsectors = envdevs->envsectors;
+
+			if (!ctx->size)
+				ctx->size = dev->envsize;
 
 			if (check_env_device(ctx, dev) < 0)
 				return -EINVAL;
