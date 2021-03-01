@@ -1327,6 +1327,11 @@ int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *val
 {
 	struct var_entry *entry, *elm, *lastentry;
 	struct vars *envs = &ctx->varlist;
+
+	/* U-Boot setenv treats '=' as an illegal character for variable names */
+	if (strchr(varname, '='))
+		return -EINVAL;
+
 	entry = __libuboot_get_env(envs, varname);
 	if (entry) {
 		if (libuboot_validate_flags(entry, value)) {
