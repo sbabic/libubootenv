@@ -646,7 +646,6 @@ static int fileprotect(struct uboot_flash_env *dev, bool on)
 	if(on == false){
 		ret_int = write(fd_force_ro, &c_unprot_char, 1);
 	} else {
-		fsync(dev->fd);
 		ret_int = write(fd_force_ro, &c_prot_char, 1);
 	}
 	close(fd_force_ro);
@@ -687,6 +686,8 @@ static int filewrite(struct uboot_flash_env *dev, void *data)
 			break;
 		}
 	}
+
+	fsync(dev->fd);
 
 	fileprotect(dev, true);  // no error handling, keep ret from write
 
