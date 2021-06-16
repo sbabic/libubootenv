@@ -2,6 +2,10 @@
 dist: bionic
 sudo: required
 
+arch:
+    - AMAD64
+    - ppc64le
+
 language: c
 
 env:
