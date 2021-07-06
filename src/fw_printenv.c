@@ -167,12 +167,26 @@ int main (int argc, char **argv) {
 				value = libuboot_get_env(ctx, argv[i]);
 				if (i + 1 == argc) {
 					if (value != NULL) {
-						libuboot_set_env(ctx, argv[i], NULL);
+						int ret;
+
+						ret = libuboot_set_env(ctx, argv[i], NULL);
+						if (ret) {
+							fprintf(stderr, "libuboot_set_env failed: %d\n", ret);
+							exit(-ret);
+						}
+
 						need_store = true;
 					}
 				} else {
 					if (value == NULL || strcmp(value, argv[i+1]) != 0) {
-						libuboot_set_env(ctx, argv[i], argv[i+1]);
+						int ret;
+
+						ret = libuboot_set_env(ctx, argv[i], argv[i+1]);
+						if (ret) {
+							fprintf(stderr, "libuboot_set_env failed: %d\n", ret);
+							exit(-ret);
+						}
+
 						need_store = true;
 					}
 				}
