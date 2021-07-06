@@ -1333,6 +1333,14 @@ int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *val
 	if (strchr(varname, '='))
 		return -EINVAL;
 
+	/*
+	 * Giving empty variable name will lead to having "=value" in U-Boot
+	 * environment which will lead to problem during load of it and U-Boot
+	 * will then load default environment.
+	 */
+	if (*varname == '\0')
+		return -EINVAL;
+
 	entry = __libuboot_get_env(envs, varname);
 	if (entry) {
 		if (libuboot_validate_flags(entry, value)) {
