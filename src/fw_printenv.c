@@ -159,11 +159,6 @@ int main (int argc, char **argv) {
 			need_store = true;
 		} else {
 			for (i = 0; i < argc; i += 2) {
-				if (strchr(argv[i], '=')) {
-					fprintf(stderr, "Error: illegal character '=' in variable name \"%s\"\n", argv[i]);
-					exit(1);
-				}
-
 				value = libuboot_get_env(ctx, argv[i]);
 				if (i + 1 == argc) {
 					if (value != NULL) {
