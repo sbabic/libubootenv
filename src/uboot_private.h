@@ -87,6 +87,8 @@ struct uboot_flash_env {
 	enum flags_type		flagstype;
 	/** type of device (mtd, ubi, file, ....) */
 	enum device_type	device_type;
+	/** Disable lock mechanism (required by some flashes */
+	int disable_mtd_lock;
 };
 
 /** Internal structure for an environment variable

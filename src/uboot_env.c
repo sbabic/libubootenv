@@ -51,6 +51,11 @@
 	    ((tvar) = LIST_NEXT((var), field), 1);			\
 	    (var) = (tvar))
 
+#define MTDLOCK(dev, psector)	\
+	if (!dev->disable_mtd_lock) ioctl (dev->fd, MEMLOCK, psector)
+#define MTDUNLOCK(dev, psector) \
+	if (!dev->disable_mtd_lock) ioctl (dev->fd, MEMUNLOCK, psector)
+
 /*
  * The lockfile is the same as defined in U-Boot for
  * the fw_printenv utilities
@@ -739,7 +744,7 @@ static int mtdwrite(struct uboot_flash_env *dev, void *data)
 			/*
 			 * unlock could fail, no check
 			 */
-			ioctl(dev->fd, MEMUNLOCK, &erase);
+			MTDUNLOCK(dev, &erase);
 			if (ioctl(dev->fd, MEMERASE, &erase) != 0) {
 				ret =-EIO;
 				goto devwrite_out;
@@ -752,7 +757,7 @@ static int mtdwrite(struct uboot_flash_env *dev, void *data)
 				ret =-EIO;
 				goto devwrite_out;
 			}
-			ioctl(dev->fd, MEMLOCK, &erase);
+			MTDLOCK(dev, &erase);
 			start += dev->sectorsize;
 			buf += blocksize;
 			count -= blocksize;
@@ -832,13 +837,13 @@ static int set_obsolete_flag(struct uboot_flash_env *dev)
 	}
 	erase.start = dev->offset;
 	erase.length = dev->sectorsize;
-	ioctl(dev->fd, MEMUNLOCK, &erase);
+	MTDUNLOCK(dev, &erase);
 	ret = write(dev->fd, &flag, sizeof(flag));
 	if (ret == sizeof(flag))
 		ret = 0;
 	else if (ret >= 0)
 		ret = -EIO;
-	ioctl (dev->fd, MEMLOCK, &erase);
+	MTDLOCK(dev, &erase);
 	close(dev->fd);
 
 	return ret;
@@ -1216,12 +1221,13 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 		if (line[0] == '#')
 			continue;
 
-		ret = sscanf(line, "%ms %lli %zx %zx %lx",
+		ret = sscanf(line, "%ms %lli %zx %zx %lx %d",
 				&tmp,
 				&dev->offset,
 				&dev->envsize,
 				&dev->sectorsize,
-				&dev->envsectors);
+				&dev->envsectors,
+				&dev->disable_mtd_lock);
 
 		/*
 		 * At least name offset and size should be set
