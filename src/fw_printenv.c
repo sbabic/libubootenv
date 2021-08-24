@@ -146,6 +146,7 @@ int main (int argc, char **argv) {
 		} else {
 			for (i = 0; i < argc; i++) {
 				value = libuboot_get_env(ctx, argv[i]);
+				ret |= (value == NULL);
 				if (noheader)
 					fprintf(stdout, "%s\n", value ? value : "");
 				else
