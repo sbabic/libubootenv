@@ -94,7 +94,7 @@ void libuboot_exit(struct uboot_ctx *ctx);
 /** @brief Load an environment
  *
  * @param[in] ctx libuboot context
- * @return 0 in case of success
+ * @return 0 in case of success, else negative value
  */
 int libuboot_open(struct uboot_ctx *ctx);
 
@@ -105,7 +105,6 @@ int libuboot_open(struct uboot_ctx *ctx);
  * libuboot_open() again.
  *
  * @param[in] ctx libuboot context
- * @return 0 in case of success
  */
 void libuboot_close(struct uboot_ctx *ctx);
 
