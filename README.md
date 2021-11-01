@@ -23,8 +23,8 @@ Replacement old tools
 
 Part of the library are the replacement of the "fw_printenv / fw_setenv" tools that
 can be used with any board - they accept as parameter a file as initial environment if none is found
-on the persistent storage. The syntax for the file and for the data configuration file
-is the same as the one described in the U-Boot project.
+on the persistent storage. The syntax for the data configuration file is the same as the one
+described in the U-Boot project whilst the syntax of the script file is a subset of the original one.
 
 ::
 
@@ -41,6 +41,17 @@ is the same as the one described in the U-Boot project.
          -f, --defenv <filename>          : default environment if no one found
          -V,                              : print version and exit
          -s, --script <filename>          : read variables to be set from a script
+
+        Script Syntax:
+         key=value
+         lines starting with '#' are treated as comment
+         lines without '=' are ignored
+
+        Script Example:
+         netdev=eth0
+         kernel_addr=400000
+         foo=empty empty empty    empty empty empty
+         bar
 
 License
 -------

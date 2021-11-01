@@ -38,10 +38,10 @@ static void usage(char *program, bool setprogram)
 	fprintf(stdout, "Usage %s [OPTION]\n",
 			program);
 	fprintf(stdout,
-		" -h,                              : print this help\n"
+		" -h, --help                       : print this help\n"
 		" -c, --config <filename>          : configuration file (old fw_env.config)\n"
 		" -f, --defenv <filename>          : default environment if no one found\n"
-		" -V,                              : print version and exit\n"
+		" -V, --version                    : print version and exit\n"
 	);
 	if (!setprogram)
 		fprintf(stdout,
@@ -50,6 +50,18 @@ static void usage(char *program, bool setprogram)
 	else
 		fprintf(stdout,
 		" -s, --script <filename>          : read variables to be set from a script\n"
+		"\n"
+		"Script Syntax:\n"
+		" key=value\n"
+		" lines starting with '#' are treated as comment\n"
+		" lines without '=' are ignored\n"
+		"\n"
+		"Script Example:\n"
+		" netdev=eth0\n"
+		" kernel_addr=400000\n"
+		" foo=empty empty empty    empty empty empty\n"
+		" bar\n"
+		"\n"
 		);
 }
 	
