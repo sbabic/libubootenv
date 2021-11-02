@@ -1077,9 +1077,10 @@ static int libuboot_load(struct uboot_ctx *ctx)
 #if !defined(NDEBUG)
 	fprintf(stdout, "Environment FLAGS %s\n", flagsvar);
 #endif
+		unsigned int flagslen = strlen(flagsvar);
 		pvar = flagsvar;
 
-		while (*pvar && (pvar - flagsvar) < strlen(flagsvar)) {
+		while (*pvar && (pvar - flagsvar) < flagslen) {
 			char *pnext;
 			pval = strchr(pvar, ':');
 			if (!pval)
