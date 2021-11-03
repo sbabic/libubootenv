@@ -94,7 +94,7 @@ static char attr_tostring(type_attribute a)
 	case TYPE_ATTR_DECIMAL:
 		return 'd';
 	case TYPE_ATTR_HEX:
-		return 'h';
+		return 'x';
 	case TYPE_ATTR_BOOL:
 		return 'b';
 	case TYPE_ATTR_IP:
