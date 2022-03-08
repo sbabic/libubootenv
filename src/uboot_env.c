@@ -134,7 +134,7 @@ static struct var_entry *__libuboot_get_env(struct vars *envs, const char *varna
 	return NULL;
 }
 
-static void free_var_entry(struct vars *envs, struct var_entry *entry)
+static void free_var_entry(struct var_entry *entry)
 {
 	if (entry) {
 		LIST_REMOVE(entry, next);
@@ -150,7 +150,7 @@ static void remove_var(struct vars *envs, const char *varname)
 
 	entry = __libuboot_get_env(envs, varname);
 
-	free_var_entry(envs, entry);
+	free_var_entry(entry);
 }
 
 static enum device_type get_device_type(char *device)
@@ -347,7 +347,7 @@ static int normalize_device_path(char *path, struct uboot_flash_env *dev)
 	return 0;
 }
 
-static int check_env_device(struct uboot_ctx *ctx, struct uboot_flash_env *dev)
+static int check_env_device(struct uboot_flash_env *dev)
 {
 	int fd, ret;
 	struct stat st;
@@ -1254,7 +1254,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 			free(tmp);
 		}
 
-		if (check_env_device(ctx, dev) < 0) {
+		if (check_env_device(dev) < 0) {
 			retval = -EINVAL;
 			break;
 		}
@@ -1350,7 +1350,7 @@ int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *val
 	if (entry) {
 		if (libuboot_validate_flags(entry, value)) {
 			if (!value) {
-				free_var_entry(envs, entry);
+				free_var_entry(entry);
 			} else {
 				free(entry->value);
 				entry->value = strdup(value);
@@ -1449,7 +1449,7 @@ int libuboot_configure(struct uboot_ctx *ctx,
 			if (!ctx->size)
 				ctx->size = dev->envsize;
 
-			if (check_env_device(ctx, dev) < 0)
+			if (check_env_device(dev) < 0)
 				return -EINVAL;
 
 			if (i > 0) {
