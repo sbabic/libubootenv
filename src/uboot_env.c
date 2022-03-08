@@ -144,15 +144,6 @@ static void free_var_entry(struct var_entry *entry)
 	}
 }
 
-static void remove_var(struct vars *envs, const char *varname)
-{
-	struct var_entry *entry;
-
-	entry = __libuboot_get_env(envs, varname);
-
-	free_var_entry(entry);
-}
-
 static enum device_type get_device_type(char *device)
 {
 	enum device_type type = DEVICE_NONE;
