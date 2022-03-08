@@ -873,7 +873,7 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 	else
 		offsetdata = offsetof(struct uboot_env_noredund, data);
 
-	data = (uint8_t *)(image + offsetdata);
+	data = (char *)(image + offsetdata);
 
 	buf = data;
 	LIST_FOREACH(entry, &ctx->varlist, next) {
@@ -957,7 +957,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	uint8_t offsetdata = offsetof(struct uboot_env_noredund, data);
 	uint8_t offsetcrc = offsetof(struct uboot_env_noredund, crc);
 	uint8_t offsetflags = offsetof(struct uboot_env_redund, flags);
-	uint8_t *data;
+	char *data;
 	struct var_entry *entry;
 
 	ctx->valid = false;
@@ -978,7 +978,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 		buf[1] = buf[0] + ctx->envdevs[0].envsize; 
 
 	for (i = 0; i < copies; i++) {
-		data = (uint8_t *)(buf[i] + offsetdata);
+		data = (char *)(buf[i] + offsetdata);
 		uint32_t crc;
 
 		dev = &ctx->envdevs[i];
@@ -1037,7 +1037,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 			ctx->valid ? "OK" : "WRONG", ctx->current);
 #endif
 
-	data = (uint8_t *)(buf[ctx->current] + offsetdata);
+	data = (char *)(buf[ctx->current] + offsetdata);
 
 	char *flagsvar = NULL;
 
