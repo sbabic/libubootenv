@@ -172,7 +172,7 @@ static int ubi_get_dev_id(char *device)
 	int dev_id = -1;
 	char *sep;
 
-	sep = rindex(device, 'i');
+	sep = strrchr(device, 'i');
 	if (sep)
 		sscanf(sep + 1, "%d", &dev_id);
 
@@ -273,7 +273,7 @@ static int ubi_update_name(struct uboot_flash_env *dev)
 	int dev_id, vol_id, ret = -EBADF;
 	char *sep;
 
-	sep = index(dev->devname, DEVNAME_SEPARATOR);
+	sep = strchr(dev->devname, DEVNAME_SEPARATOR);
 	if (sep)
 	{
 		memset(device, 0, DEVNAME_MAX_LENGTH);
@@ -308,7 +308,7 @@ static int normalize_device_path(char *path, struct uboot_flash_env *dev)
 	 * if volume name is present, split into device path and volume
 	 * since only the device path needs normalized
 	 */
-	sep = index(path, DEVNAME_SEPARATOR);
+	sep = strchr(path, DEVNAME_SEPARATOR);
 	if (sep)
 	{
 		volume_len = strlen(sep);
