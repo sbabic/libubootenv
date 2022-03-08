@@ -952,7 +952,6 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	size_t bufsize, usable_envsize;
 	struct uboot_flash_env *dev;
 	bool crcenv[2];
-	unsigned char flags[2];
 	char *line, *next;
 	uint8_t offsetdata = offsetof(struct uboot_env_noredund, data);
 	uint8_t offsetcrc = offsetof(struct uboot_env_noredund, crc);
@@ -1200,7 +1199,6 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	FILE *fp;
 	char *line = NULL;
 	size_t bufsize = 0;
-	int index = 0;
 	int ret = 0;
 	int ndev = 0;
 	struct uboot_flash_env *dev;
