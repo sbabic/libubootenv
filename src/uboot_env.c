@@ -597,7 +597,9 @@ static int fileprotect(struct uboot_flash_env *dev, bool on)
 	int fd_force_ro;
 
 	// Devices without ro flag at /sys/class/block/mmcblk?boot?/force_ro are ignored
-	if (strncmp("/dev/", dev->devname, 5) == 0) {
+	if (strncmp("/dev/block/", dev->devname, 11) == 0) {
+		devfile = dev->devname + 11;
+	} else if (strncmp("/dev/", dev->devname, 5) == 0) {
 		devfile = dev->devname + 5;
 	} else {
 		return ret;
