@@ -20,6 +20,14 @@
 #define VERSION "0.1"
 #endif
 
+#ifndef DEFAULT_CFG_FILE
+#define DEFAULT_CFG_FILE "/etc/fw_env.config"
+#endif
+
+#ifndef DEFAULT_ENV_FILE
+#define DEFAULT_ENV_FILE "/etc/u-boot-initial-env"
+#endif
+
 #define PROGRAM_SET	"fw_setenv"
 
 static struct option long_options[] = {
@@ -39,8 +47,8 @@ static void usage(char *program, bool setprogram)
 			program);
 	fprintf(stdout,
 		" -h, --help                       : print this help\n"
-		" -c, --config <filename>          : configuration file (old fw_env.config)\n"
-		" -f, --defenv <filename>          : default environment if no one found\n"
+		" -c, --config <filename>          : configuration file (by default: " DEFAULT_CFG_FILE ")\n"
+		" -f, --defenv <filename>          : default environment if no one found (by default: " DEFAULT_ENV_FILE ")\n"
 		" -V, --version                    : print version and exit\n"
 	);
 	if (!setprogram)
@@ -127,7 +135,7 @@ int main (int argc, char **argv) {
 	}
 
 	if (!cfgfname)
-		cfgfname = "/etc/fw_env.config";
+		cfgfname = DEFAULT_CFG_FILE;
 
 	if ((ret = libuboot_read_config(ctx, cfgfname)) < 0) {
 		fprintf(stderr, "Configuration file wrong or corrupted\n");
@@ -135,7 +143,7 @@ int main (int argc, char **argv) {
 	}
 
 	if (!defenvfile)
-		defenvfile = "/etc/u-boot-initial-env";
+		defenvfile = DEFAULT_ENV_FILE;
 
 	if ((ret = libuboot_open(ctx)) < 0) {
 		fprintf(stderr, "Cannot read environment, using default\n");

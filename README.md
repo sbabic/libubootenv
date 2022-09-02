@@ -30,15 +30,15 @@ described in the U-Boot project whilst the syntax of the script file is a subset
 
         Usage fw_printenv [OPTION]
          -h,                              : print this help
-         -c, --config <filename>          : configuration file (old fw_env.config)
-         -f, --defenv <filename>          : default environment if no one found
+         -c, --config <filename>          : configuration file (by default: /etc/fw_env.config)
+         -f, --defenv <filename>          : default environment if no one found (by default: /etc/u-boot-initial-env)
          -V,                              : print version and exit
          -n, --no-header                  : do not print variable name
 
         Usage fw_setenv [OPTION]
          -h,                              : print this help
-         -c, --config <filename>          : configuration file (old fw_env.config)
-         -f, --defenv <filename>          : default environment if no one found
+         -c, --config <filename>          : configuration file (by default: /etc/fw_env.config)
+         -f, --defenv <filename>          : default environment if no one found (by default: /etc/u-boot-initial-env)
          -V,                              : print version and exit
          -s, --script <filename>          : read variables to be set from a script
 
