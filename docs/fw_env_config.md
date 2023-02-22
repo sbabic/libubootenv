@@ -3,84 +3,94 @@ SPDX-FileCopyrightText: 2019-2021 Stefano Babic <sbabic@denx.de>
 
 SPDX-License-Identifier:     LGPL-2.1-or-later
 -->
-fw_env.config configuration file
+fw_env.config Configuration File
 ================================
 
-This is the configuration file for fw_(printenv/setenv) utility.
+This is the configuration file for fw_{printenv,setenv} utility.
 Up to two entries are valid, in this case the redundant
 environment sector is assumed present.
-Notice, that the "Number of sectors" is not required on NOR and SPI-dataflash.
-Futhermore, if the Flash sector size is omitted, this value is assumed to
-be the same as the Environment size, which is valid for NOR and SPI-dataflash
-Device offset must be prefixed with 0x to be parsed as a hexadecimal value.
-
-Structure of the file
----------------------
-
-Entries must be separated by spaces or tab
+Notice, that the "Number of Sectors" is not required on NOR and SPI dataflash.
+Futhermore, if the Flash Sector Size is omitted, this value is assumed to
+be the same as the Environment Size, which is valid for NOR and SPI dataflash.
+Device Offset must be prefixed with 0x to be parsed as a hexadecimal value.
 
 
-| device name     | Device offset|Env. size|Flash sector size|Number of sectors|Disable lock mechanism|
-|-----------------|--------------|---------|-----------------|-----------------|----------------------|
-|                 |              |         |                 |                 |                      |
+Structure of the Configuration File
+-----------------------------------
 
-- device name: device or file where env is stored (mandatory)
-- offset : offset from start of file or device (mandatory)
-- env size : size of environment
-- Flash sector size : (optional) if not set, it is read from kernel
-- Number of sectors: (optional) number of sectors for environment (mainly used with raw NAND)
-- Disable lock mechanism : (optional), 0|1, default=0 (LOCK enable)
+Entries must be separated by spaces or tabs.
 
-NOR example
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+|                  |               |                  |                   |                   |                        |
+
+- Device Name: device or file where environment is stored (mandatory)
+- Device Offset: offset from start of file or device (mandatory)
+- Environment Size: size of environment (in bytes)
+- Flash Sector Size: (optional) if not set, it is read from kernel
+- Number of Sectors: (optional) number of sectors for environment (mainly used with raw NAND)
+- Disable Lock Mechanism : (optional), 0|1, default=0 (LOCK enabled)
+
+
+NOR Example
 -----------
-| device name     | Device offset|Env. size|Flash sector size|Number of sectors|Disable lock mechanism|
-|-----------------|--------------|---------|-----------------|-----------------|----------------------|
-|/dev/mtd1        |     0x0000   | 0x4000  |    0x4000       |                 |                      |
-|/dev/mtd2        |     0x0000   | 0x4000  |    0x4000       |                 |                      |
 
-MTD SPI-dataflash example
----------------------------
-| device name     | Device offset|Env. size|Flash sector size|Number of sectors|Disable lock mechanism|
-|-----------------|--------------|---------|-----------------|-----------------|----------------------|
-|/dev/mtd5        |     0x4200   | 0x4000  |                 |                 |                      |
-|/dev/mtd6        |     0x4200   | 0x4000  |                 |                 |                      |
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+| /dev/mtd1        |     0x0       |      0x4000      |      0x4000       |                   |                        |
+| /dev/mtd2        |     0x0       |      0x4000      |      0x4000       |                   |                        |
 
-NAND example
------------
-| device name     | Device offset|Env. size|Flash sector size|Number of sectors|Disable lock mechanism|
-|-----------------|--------------|---------|-----------------|-----------------|----------------------|
-|/dev/mtd0        |     0x4000   | 0x4000  |    0x20000      |       2         |                      |
 
-Block device example
+MTD SPI Dataflash Example
+-------------------------
+
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+| /dev/mtd5        |     0x4200    |      0x4000      |                   |                   |                        |
+| /dev/mtd6        |     0x4200    |      0x4000      |                   |                   |                        |
+
+
+NAND Example
+------------
+
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+| /dev/mtd0        |     0x4000    |      0x4000      |      0x20000      |         2         |                        |
+
+
+Block Device Example
 --------------------
+
 On a block device a negative offset is treated as a backwards offset from the
 end of the device/partition, rather than a forwards offset from the start.
 
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+| /dev/mmcblk0     |     0xC0000   |     0x20000      |                   |                   |                        |
+| /dev/mmcblk0     |    -0x20000   |     0x20000      |                   |                   |                        |
 
-| device name     | Device offset|Env. size|Flash sector size|Number of sectors|Disable lock mechanism|
-|-----------------|--------------|---------|-----------------|-----------------|----------------------|
-|/dev/mmcblk0     |     0xc0000  | 0x20000 |                 |                 |                      |
-|/dev/mmcblk0     |    -0x20000  | 0x20000 |                 |                 |                      |
 
-VFAT example
+VFAT Example
 ------------
 
-| device name     | Device offset|Env. size|Flash sector size|Number of sectors|Disable lock mechanism|
-|-----------------|--------------|---------|-----------------|-----------------|----------------------|
-|/boot/uboot.env  |     0x00000  | 0x4000  |                 |                 |                      |
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+| /boot/uboot.env  |     0x0       |      0x4000      |                   |                   |                        |
 
-UBI volume
-------------
 
-| device name     | Device offset|Env. size|Flash sector size|Number of sectors|Disable lock mechanism|
-|-----------------|--------------|---------|-----------------|-----------------|----------------------|
-|/dev/ubi0_0      |     0x0      | 0x1f000 |  0x1f000        |                 |                      |
-|/dev/ubi0_1      |     0x0      | 0x1f000 |  0x1f000        |                 |                      |
-
-UBI volume by name
+UBI Volume Example
 ------------------
 
-| device name     | Device offset|Env. size|Flash sector size|Number of sectors|Disable lock mechanism|
-|-----------------|--------------|---------|-----------------|-----------------|----------------------|
-|/dev/ubi0:env    |     0x0      | 0x1f000 |  0x1f000        |                 |                      |
-|/dev/ubi0:redund |     0x0      | 0x1f000 |  0x1f000        |                 |                      |
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+| /dev/ubi0_0      |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
+| /dev/ubi0_1      |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
+
+
+UBI Volume by Name Example
+--------------------------
+
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+| /dev/ubi0:env    |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
+| /dev/ubi0:redund |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
