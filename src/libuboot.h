@@ -19,19 +19,19 @@ struct uboot_ctx;
 
 #define DEVNAME_SEPARATOR	':'
 
-/** Configuration passed in initialization 
+/** Configuration passed in initialization
  *
  */
 struct uboot_env_device {
 	/** path to device or file where env is stored */
-	char 		*devname;	
+	char 		*devname;
 	/** Start offset inside device path */
 	long long int 	offset;
 	/** size of environment */
 	size_t 		envsize;
 	/** Size of sector (for MTD) */
 	size_t 		sectorsize;
- 	/** Number of sectors for each environment */
+	/** Number of sectors for each environment */
 	unsigned long 	envsectors;
 };
 
@@ -46,7 +46,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config);
 /** @brief Read U-Boot environment configuration from structure
  *
  * @param[in] ctx libuboot context
- * @param[in] envdevs array of two uboot_env_device 
+ * @param[in] envdevs array of two uboot_env_device
  * @return 0 in case of success, else negative value
  */
 int libuboot_configure(struct uboot_ctx *ctx,
@@ -80,7 +80,7 @@ int libuboot_env_store(struct uboot_ctx *ctx);
  *
  * Initialize the library and get the context structure
  *
- * @param[out] *ctx struct uboot_ctx **out allocated structure 
+ * @param[out] *ctx struct uboot_ctx **out allocated structure
  * @param[in] struct uboot_env_device *envdevs
  * @return 0 in case of success, else negative value
  */
@@ -113,7 +113,7 @@ void libuboot_close(struct uboot_ctx *ctx);
 /** @brief Set a variable
  *
  * Set a variable. It creates a new variable if not present in
- * the database, changes it or drops if value is NULL 
+ * the database, changes it or drops if value is NULL
  *
  * @param[in] ctx libuboot context
  * @param[in] variable name

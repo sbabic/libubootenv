@@ -11,7 +11,7 @@
  * @brief This is the implementation of libubootenv library
  *
  */
- 
+
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -422,11 +422,11 @@ static bool check_compatible_devices(struct uboot_ctx *ctx)
 	if (!ctx->redundant)
 		return true;
 
-	if (ctx->envdevs[0].mtdinfo.type != ctx->envdevs[1].mtdinfo.type) 
+	if (ctx->envdevs[0].mtdinfo.type != ctx->envdevs[1].mtdinfo.type)
 		return false;
-	if (ctx->envdevs[0].flagstype != ctx->envdevs[1].flagstype) 
+	if (ctx->envdevs[0].flagstype != ctx->envdevs[1].flagstype)
 		return false;
-	if (ctx->envdevs[0].envsize != ctx->envdevs[1].envsize) 
+	if (ctx->envdevs[0].envsize != ctx->envdevs[1].envsize)
 		return false;
 
 	return true;
@@ -881,14 +881,14 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 
 	buf = data;
 	LIST_FOREACH(entry, &ctx->varlist, next) {
-		size = (ctx->size - offsetdata)  - (buf - data); 
-		if ((strlen(entry->name) + strlen(entry->value) + 2) > size) 
+		size = (ctx->size - offsetdata)  - (buf - data);
+		if ((strlen(entry->name) + strlen(entry->value) + 2) > size)
 			return -ENOMEM;
 
 		if (entry->type || entry->access)
 			saveflags = true;
 
-		buf += snprintf(buf, size, "%s=%s", entry->name, entry->value); 
+		buf += snprintf(buf, size, "%s=%s", entry->name, entry->value);
 		buf++;
 	}
 
@@ -897,11 +897,11 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 	 */
 	if (saveflags) {
 		bool first = true;
-		size = (ctx->size - offsetdata)  - (buf - data); 
+		size = (ctx->size - offsetdata)  - (buf - data);
 		buf += snprintf(buf, size, ".flags=");
 
 		LIST_FOREACH(entry, &ctx->varlist, next) {
-			size = (ctx->size - offsetdata)  - (buf - data); 
+			size = (ctx->size - offsetdata)  - (buf - data);
 			if (entry->type || entry->access) {
 				buf += snprintf(buf, size, "%s%s:%c%c",
 						first ? "" : ",",
@@ -964,11 +964,11 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	struct var_entry *entry;
 
 	ctx->valid = false;
-    
+
 	bufsize = ctx->size;
 	if (ctx->redundant) {
 		copies++;
-		bufsize += ctx->size; 
+		bufsize += ctx->size;
 		offsetdata = offsetof(struct uboot_env_redund, data);
 		offsetcrc = offsetof(struct uboot_env_redund, crc);
 	}
@@ -978,7 +978,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 		return -ENOMEM;
 
 	if (copies > 1)
-		buf[1] = buf[0] + ctx->envdevs[0].envsize; 
+		buf[1] = buf[0] + ctx->envdevs[0].envsize;
 
 	for (i = 0; i < copies; i++) {
 		data = (char *)(buf[i] + offsetdata);
@@ -1017,17 +1017,17 @@ static int libuboot_load(struct uboot_ctx *ctx)
 				ctx->current = 0;
 			switch (ctx->envdevs[0].flagstype) {
 			case FLAGS_BOOLEAN:
-				if (ctx->envdevs[1].flags == 0xFF) 
+				if (ctx->envdevs[1].flags == 0xFF)
 					ctx->current = 1;
-				else if (ctx->envdevs[0].flags == 0xFF) 
+				else if (ctx->envdevs[0].flags == 0xFF)
 					ctx->current = 0;
 				break;
 			case FLAGS_INCREMENTAL:
 				/* check overflow */
-				if (ctx->envdevs[0].flags == 0xFF && 
+				if (ctx->envdevs[0].flags == 0xFF &&
 					ctx->envdevs[1].flags == 0)
 					ctx->current = 1;
-				else if (ctx->envdevs[1].flags == 0xFF && 
+				else if (ctx->envdevs[1].flags == 0xFF &&
 					ctx->envdevs[0].flags == 0)
 					ctx->current = 0;
 				break;
@@ -1264,7 +1264,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 		}
 
 		ndev++;
-		dev++; 
+		dev++;
 
 		if (ndev >= 2) {
 			ctx->redundant = true;
@@ -1324,7 +1324,7 @@ static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
 		ok_access = (value[0] == '1' || value[0] == 'y' || value[0] == 't' ||
 			value[0] == 'Y' || value[0] == 'T' ||
 			value[0] == '0' || value[0] == 'n' || value[0] == 'f' ||
- 			value[0] == 'N' || value[0] == 'F') && (strlen(value) != 1);
+			value[0] == 'N' || value[0] == 'F') && (strlen(value) != 1);
 		break;
 	case TYPE_ATTR_IP:
 	case TYPE_ATTR_MAC:
@@ -1426,7 +1426,6 @@ const char *libuboot_getvalue(void *entry)
 
 void *libuboot_iterator(struct uboot_ctx *ctx, void *next)
 {
-
 	if (!next)
 		return  ctx->varlist.lh_first;
 	else

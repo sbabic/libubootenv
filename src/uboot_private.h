@@ -45,7 +45,7 @@ enum device_type {
 /**
  * U-Boot environment should always be redundant, but
  * for compatibility reasons a single copy must
- * be also supported. Structure is different because 
+ * be also supported. Structure is different because
  * there is no flags in the single copy
  */
 struct uboot_env_noredund {
@@ -73,17 +73,17 @@ struct uboot_flash_env {
 	size_t 			envsize;
 	/** Size of sector (for MTD) */
 	size_t 			sectorsize;
- 	/** Number of sectors for each environment */
+	/** Number of sectors for each environment */
 	long unsigned int 	envsectors;
- 	/** MTD structure as returned by ioctl() call */
+	/** MTD structure as returned by ioctl() call */
 	struct mtd_info_user	mtdinfo;
- 	/** Computed CRC on the stored environment */
+	/** Computed CRC on the stored environment */
 	uint32_t		crc;
- 	/** file descriptor used to access the device */
+	/** file descriptor used to access the device */
 	int  			fd;
- 	/** flags (see flags_type) are one byte in the stored environment */
+	/** flags (see flags_type) are one byte in the stored environment */
 	unsigned char		flags;
- 	/** flags according to device type */
+	/** flags according to device type */
 	enum flags_type		flagstype;
 	/** type of device (mtd, ubi, file, ....) */
 	enum device_type	device_type;

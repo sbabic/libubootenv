@@ -72,7 +72,7 @@ static void usage(char *program, bool setprogram)
 		"\n"
 		);
 }
-	
+
 int main (int argc, char **argv) {
 	struct uboot_ctx *ctx;
 	char *options = "Vc:f:s:nh";
@@ -125,7 +125,7 @@ int main (int argc, char **argv) {
 			break;
 		}
 	}
-	
+
 	argc -= optind;
 	argv += optind;
 
