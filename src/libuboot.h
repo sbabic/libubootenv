@@ -54,10 +54,10 @@ int libuboot_configure(struct uboot_ctx *ctx,
 
 /** @brief Import environment from file
  *
- * Read and parses variable from a file in the same way as
+ * Read and parses variable(s) from a file in the same way as
  * U-Boot does with "env import -t"
  * The file has the format:
- * 	<variable name>=<value>
+ * < variable name >=< value >
  * Comments starting with "#" are allowed.
  *
  * @param[in] ctx libuboot context
@@ -80,8 +80,9 @@ int libuboot_env_store(struct uboot_ctx *ctx);
  *
  * Initialize the library and get the context structure
  *
- * @param[out] *ctx struct uboot_ctx **out allocated structure
- * @param[in] struct uboot_env_device *envdevs
+ * @param[out] out struct uboot_ctx allocated structure
+ * @param[in] envdevs environment storage definitions, maybe NULL
+ *                    in case this is loaded from configuration file later
  * @return 0 in case of success, else negative value
  */
 int libuboot_initialize(struct uboot_ctx **out,
@@ -102,7 +103,7 @@ int libuboot_open(struct uboot_ctx *ctx);
 
 /** @brief Release an environment
  *
- * Release allocated recource for the environment, but
+ * Release allocated resources for the environment, but
  * maintain the context. This allows to call
  * libuboot_open() again.
  *
@@ -112,13 +113,13 @@ void libuboot_close(struct uboot_ctx *ctx);
 
 /** @brief Set a variable
  *
- * Set a variable. It creates a new variable if not present in
- * the database, changes it or drops if value is NULL
+ * It creates a new variable if not present in
+ * the database, changes it or drops if value is NULL.
  *
  * @param[in] ctx libuboot context
- * @param[in] variable name
- * @param[in] value. In case this is NULL, the variable is dropped
- * @return 0 in case of success
+ * @param[in] varname name of variable to set/change/delete
+ * @param[in] value new value of variable; in case this is NULL, the variable is dropped
+ * @return 0 in case of success, else negative value
  */
 int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *value);
 
@@ -130,7 +131,7 @@ int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *val
  * used anymore.
  *
  * @param[in] ctx libuboot context
- * @param[in] variable name
+ * @param[in] varname variable name
  * @return value in case of success, NULL in case of error
  */
 char *libuboot_get_env(struct uboot_ctx *ctx, const char *varname);
