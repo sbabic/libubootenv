@@ -21,15 +21,14 @@ SET_TARGET_PROPERTIES(ubootenv PROPERTIES VERSION ${VERSION} SOVERSION ${SOVERSI
 ADD_LIBRARY(ubootenv_static STATIC ${libubootenv_SOURCES} ${include_HEADERS})
 SET_TARGET_PROPERTIES(ubootenv_static PROPERTIES OUTPUT_NAME ubootenv)
 add_executable(fw_printenv fw_printenv.c)
-add_executable(fw_setenv fw_setenv.c)
 target_link_libraries(ubootenv z)
 target_link_libraries(fw_printenv ubootenv)
-target_link_libraries(fw_setenv ubootenv)
+add_custom_target(fw_setenv ALL ${CMAKE_COMMAND} -E create_symlink fw_printenv fw_setenv)
 
 install (TARGETS ubootenv ubootenv_static DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install (FILES libuboot.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install (TARGETS fw_printenv DESTINATION ${CMAKE_INSTALL_BINDIR})
-install (TARGETS fw_setenv DESTINATION ${CMAKE_INSTALL_BINDIR})
+install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/fw_setenv DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # Handle pkg-config files
 set(prefix      ${CMAKE_INSTALL_PREFIX})
