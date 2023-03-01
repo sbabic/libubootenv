@@ -19,7 +19,6 @@
 *.swp
 *.patch
 *.so
-.gitignore
 
 CMakeFiles/
 Debug/
@@ -30,3 +29,6 @@ src/fw_printenv
 src/libubootenv.so.*
 src/libubootenv_static.a
 .vscode
+.cproject
+.project
+.settings
