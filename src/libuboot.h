@@ -43,6 +43,23 @@ struct uboot_env_device {
  */
 int libuboot_read_config(struct uboot_ctx *ctx, const char *config);
 
+/** @brief Read multiple environment configuration from a file
+ *
+ * @param[in] ctx libuboot context
+ * @param[in] config path to the configuration file in yaml format
+ * @return 0 in case of success, else negative value
+ */
+int libuboot_read_multiple_config(struct uboot_ctx **ctxlist, const char *config);
+
+/** @brief Get ctx from list
+ *
+ * @param[in] ctxlist libuboot context array
+ * @param[in] name name identifier for the single ctx
+ * @return 0 in case of success, else negative value
+ */
+struct uboot_ctx *libuboot_get_namespace(struct uboot_ctx *ctxlist, const char *name);
+
+
 /** @brief Read U-Boot environment configuration from structure
  *
  * @param[in] ctx libuboot context

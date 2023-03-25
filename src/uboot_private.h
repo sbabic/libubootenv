@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/queue.h>
+#include <sys/types.h>
 #include <mtd/mtd-user.h>
 #include "libuboot.h"
 
@@ -125,4 +126,12 @@ struct uboot_ctx {
 	int lock;
 	/** pointer to the internal db */
 	struct vars varlist;
+	/** name of the set */
+	char *name;
+	/** lockfile */
+	char *lockfile;
+	/** Number of namespaces */
+	int nelem;
+	/** private pointer to list */
+	struct uboot_ctx *ctxlist;
 };

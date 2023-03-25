@@ -3,10 +3,12 @@ SPDX-FileCopyrightText: 2019-2021 Stefano Babic <sbabic@denx.de>
 
 SPDX-License-Identifier:     LGPL-2.1-or-later
 -->
-fw_env.config Configuration File
-================================
+fw_env.config Configuration File- Legacy format
+================================================
 
-This is the configuration file for fw_{printenv,setenv} utility.
+This is the configuration file for fw_{printenv,setenv} utility. It was defined in U-Boot project
+and it is defined here as legacy format.
+
 Up to two entries are valid, in this case the redundant
 environment sector is assumed present.
 Notice, that the "Number of Sectors" is not required on NOR and SPI dataflash.
@@ -94,3 +96,34 @@ UBI Volume by Name Example
 |------------------|---------------|------------------|-------------------|-------------------|------------------------|
 | /dev/ubi0:env    |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
 | /dev/ubi0:redund |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
+
+Configuration File in YAML
+==========================
+
+A YAML format is defined to allow multiple sets of variable. This lets have same features (redundancy, power-cut safe) for
+environment that are not bound to the U-Boot bootloader.
+
+uboot:
+  size : 0x4000
+  lockfile : /var/lock/fw_printenv.lock
+  devices:
+    - path : /dev/mtd0
+      offset : 0xA0000
+      sectorsize : 0x10000
+      unlock : yes
+    - path : /dev/mtd0
+      offset : 0xB0000
+      sectorsize : 0x10000
+      disable-lock : yes
+
+appvar:
+  size : 0x4000
+  lockfile : /var/lock/appvar.lock
+  devices:
+    - path : /dev/mtd1
+      offset : 0
+      sectorsize : 0x10000
+      unlock : yes
+    - path : /dev/mtd1
+      offset : 0x10000
+      sectorsize : 0x10000

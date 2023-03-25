@@ -9,7 +9,7 @@
  * @file uboot_env.c
  *
  * @brief This is the implementation of libubootenv library
- *
+	*
  */
 
 #define _GNU_SOURCE
@@ -33,6 +33,7 @@
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <zlib.h>
+#include <yaml.h>
 #include <mtd/mtd-user.h>
 #include <mtd/ubi-user.h>
 
@@ -56,11 +57,54 @@
 #define MTDUNLOCK(dev, psector) \
 	if (!dev->disable_mtd_lock) ioctl (dev->fd, MEMUNLOCK, psector)
 
+/* yaml_* functions return 1 on success and 0 on failure. */
+enum yaml_status {
+    SUCCESS = 0,
+    FAILURE = 1
+};
+
+enum yaml_state {
+	STATE_START,    /* start state */
+	STATE_STREAM,   /* start/end stream */
+	STATE_DOCUMENT, /* start/end document */
+	STATE_SECTION,  /* top level */
+
+	STATE_NAMESPACE,	/* Init Configuration Namespace */
+	STATE_NAMESPACE_FIELDS,	/* namespace key list */
+	STATE_NKEY,		/* Check key names */
+	STATE_NSIZE,		/* Size key-value pair */
+	STATE_NLOCKFILE,	/* Lockfile key-value pair */
+	STATE_DEVVALUES,	/* Devices key names */
+
+	STATE_NPATH,
+	STATE_NOFFSET,
+	STATE_NSECTORSIZE,
+	STATE_NUNLOCK,
+	STATE_STOP      /* end state */
+};
+
+typedef enum yaml_parse_error_e {
+	YAML_UNEXPECTED_STATE,
+	YAML_UNEXPECTED_KEY,
+	YAML_BAD_DEVICE,
+	YAML_BAD_DEVNAME,
+} yaml_parse_error_type_t;
+
+struct parser_state {
+	enum yaml_state state;		/* The current parse state */
+	struct uboot_ctx *ctxsets;	/* Array of vars set ctx */
+	struct uboot_ctx *ctx;		/* Current ctx in parsing */
+	unsigned int nelem;		/* Number of elemets in ctxsets */
+	unsigned int cdev;		/* current device in parsing */
+	yaml_parse_error_type_t error;	/* error causing parser to stop */
+	yaml_event_type_t event_type;	/* event type causing error */
+};
+
 /*
  * The lockfile is the same as defined in U-Boot for
  * the fw_printenv utilities
  */
-static const char *lockname = "/var/lock/fw_printenv.lock";
+	static const char *lockname = "/var/lock/fw_printenv.lock";
 static int libuboot_lock(struct uboot_ctx *ctx)
 {
 	int lockfd = -1;
@@ -1146,6 +1190,315 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	return ctx->valid ? 0 : -ENODATA;
 }
 
+int consume_event(struct parser_state *s, yaml_event_t *event)
+{
+	char *value;
+	struct uboot_flash_env *dev;
+	int cdev;
+
+	switch (s->state) {
+	case STATE_START:
+		switch (event->type) {
+		case YAML_STREAM_START_EVENT:
+			s->state = STATE_STREAM;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_STREAM:
+		switch (event->type) {
+		case YAML_DOCUMENT_START_EVENT:
+			s->state = STATE_DOCUMENT;
+			break;
+		case YAML_STREAM_END_EVENT:
+			s->state = STATE_STOP;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_DOCUMENT:
+		switch (event->type) {
+		case YAML_MAPPING_START_EVENT:
+			s->state = STATE_SECTION;
+			break;
+		case YAML_DOCUMENT_END_EVENT:
+			s->state = STATE_STREAM;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_SECTION:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			struct uboot_ctx *newctx;
+			value = (char *)event->data.scalar.value;
+			newctx = calloc (s->nelem + 1, sizeof(*newctx));
+			for (int i = 0; i < s->nelem; i++) {
+				newctx[i] = s->ctxsets[i];
+			}
+			if (s->ctxsets) free(s->ctxsets);
+			s->ctxsets = newctx;
+			s->ctx = &newctx[s->nelem];
+			s->ctx->name = strdup(value);
+			s->nelem++;
+			s->state = STATE_NAMESPACE;
+			break;
+		case YAML_MAPPING_END_EVENT:
+			s->state = STATE_DOCUMENT;
+			break;
+		case YAML_DOCUMENT_END_EVENT:
+			s->state = STATE_STREAM;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NAMESPACE:
+		switch (event->type) {
+		case YAML_MAPPING_START_EVENT:
+			s->state = STATE_NAMESPACE_FIELDS;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NAMESPACE_FIELDS:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			value = (char *)event->data.scalar.value;
+			if (!strcmp(value, "size")) {
+				s->state = STATE_NSIZE;
+			} else if (!strcmp(value, "lockfile")) {
+				s->state = STATE_NLOCKFILE;
+			} else if (!strcmp(value, "devices")) {
+				s->state = STATE_DEVVALUES;
+				s->cdev = 0;
+			} else {
+				s->error = YAML_UNEXPECTED_KEY;
+				s->event_type = event->type;
+				return FAILURE;
+			}
+			break;
+		case YAML_MAPPING_END_EVENT:
+			s->state = STATE_SECTION;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NSIZE:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			value = (char *)event->data.scalar.value;
+			errno = 0;
+			s->ctx->size = strtoull(value, NULL, 0);
+			s->state = STATE_NAMESPACE_FIELDS;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NLOCKFILE:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			value = (char *)event->data.scalar.value;
+			s->ctx->lockfile = strdup(value);
+			s->state = STATE_NAMESPACE_FIELDS;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_DEVVALUES:
+		switch (event->type) {
+		case YAML_MAPPING_START_EVENT:
+		case YAML_SEQUENCE_START_EVENT:
+			break;
+		case YAML_MAPPING_END_EVENT:
+			dev = &s->ctx->envdevs[s->cdev];
+			if (check_env_device(dev) < 0) {
+				s->error = YAML_BAD_DEVICE;
+				s->event_type = event->type;
+				return FAILURE;
+			}
+			s->cdev++;
+			break;
+		case YAML_SEQUENCE_END_EVENT:
+			s->state = STATE_NAMESPACE_FIELDS;
+			break;
+		case YAML_SCALAR_EVENT:
+			value = (char *)event->data.scalar.value;
+			if (s->cdev)
+				s->ctx->redundant = true;
+			if (!strcmp(value, "path")) {
+				s->state = STATE_NPATH;
+			} else if (!strcmp(value, "offset")) {
+				s->state = STATE_NOFFSET;
+			} else if (!strcmp(value, "sectorsize")) {
+				s->state = STATE_NSECTORSIZE;
+				} else if (!strcmp(value, "disablelock")) {
+				s->state = STATE_NUNLOCK;
+			} else {
+				s->error = YAML_UNEXPECTED_KEY;
+				s->event_type = event->type;
+				return FAILURE;
+			}
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NPATH:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			dev = &s->ctx->envdevs[s->cdev];
+			value = (char *)event->data.scalar.value;
+			if (normalize_device_path(value, dev) < 0) {
+				s->error = YAML_BAD_DEVNAME;
+				s->event_type = event->type;
+				return FAILURE;
+			}
+			dev->envsize = s->ctx->size;
+			s->state = STATE_DEVVALUES;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NOFFSET:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			dev = &s->ctx->envdevs[s->cdev];
+			value = (char *)event->data.scalar.value;
+			dev->offset = strtoull(value, NULL, 0);
+			s->state = STATE_DEVVALUES;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NSECTORSIZE:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			dev = &s->ctx->envdevs[s->cdev];
+			value = (char *)event->data.scalar.value;
+			dev->sectorsize = strtoull(value, NULL, 0);
+			s->state = STATE_DEVVALUES;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NUNLOCK:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			dev = &s->ctx->envdevs[s->cdev];
+			value = (char *)event->data.scalar.value;
+			if (!strcmp(value, "yes"))
+				dev->disable_mtd_lock = 1;
+			s->state = STATE_DEVVALUES;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+    case STATE_STOP:
+        break;
+    }
+    return SUCCESS;
+}
+
+int parse_yaml_config(struct uboot_ctx **ctxlist, FILE *fp)
+{
+	yaml_parser_t parser;
+	yaml_event_t  event;
+	enum yaml_status status;
+	struct parser_state state;
+	struct uboot_ctx *ctx;
+
+	if (!yaml_parser_initialize(&parser))
+		return -ENOMEM;
+
+	 /* Set input file */
+	yaml_parser_set_input_file(&parser, fp);
+	memset(&state, 0, sizeof(state));
+	state.state = STATE_START;
+	do {
+		if (!yaml_parser_parse(&parser, &event)) {
+			status = FAILURE;
+			goto cleanup;
+		}
+		status = consume_event(&state, &event);
+		yaml_event_delete(&event);
+		if (status == FAILURE) {
+			goto cleanup;
+		}
+	} while (state.state != STATE_STOP);
+
+	state.ctxsets[0].nelem = state.nelem;
+
+	for (int i = 0; i < state.nelem; i++) {
+		ctx = &state.ctxsets[i];
+		ctx->ctxlist = &state.ctxsets[0];
+		if (ctx->redundant && !check_compatible_devices(ctx)) {
+			status = FAILURE;
+			break;
+		}
+	}
+
+
+cleanup:
+	yaml_parser_delete(&parser);
+	if (status == FAILURE) {
+		if (state.ctxsets) free (state.ctxsets);
+		state.ctxsets = NULL;
+	}
+	*ctxlist = state.ctxsets;
+	return status;
+}
+
 #define LINE_LENGTH 1024
 int libuboot_load_file(struct uboot_ctx *ctx, const char *filename)
 {
@@ -1196,6 +1549,24 @@ int libuboot_load_file(struct uboot_ctx *ctx, const char *filename)
 	free(buf);
 
 	return 0;
+}
+
+int libuboot_read_multiple_config(struct uboot_ctx **ctxlist, const char *config)
+{
+	FILE *fp;
+	int ret;
+
+	if (!config)
+		return -EINVAL;
+
+	fp = fopen(config, "r");
+	if (!fp)
+		return -EBADF;
+
+	ret = parse_yaml_config(ctxlist, fp);
+	fclose(fp);
+
+	return ret;
 }
 
 int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
@@ -1466,6 +1837,28 @@ int libuboot_configure(struct uboot_ctx *ctx,
 	return 0;
 }
 
+struct uboot_ctx *libuboot_get_namespace(struct uboot_ctx *ctxlist, const char *name)
+{
+	struct uboot_ctx *ctx;
+	int i;
+
+	if (!ctxlist)
+		return NULL;
+
+	/*
+	 * Be sure to get the whole list, pointer is stored into each
+	 * CTX pointer in the list
+	 */
+	if (ctxlist->ctxlist)
+		ctxlist = ctxlist->ctxlist;
+	for (i = 0, ctx = ctxlist; i < ctxlist->nelem; i++, ctx++) {
+		if (!strcmp(ctx->name, name))
+			return ctx;
+	}
+
+	return NULL;
+}
+
 int libuboot_initialize(struct uboot_ctx **out,
 			struct uboot_env_device *envdevs) {
 	struct uboot_ctx *ctx;
@@ -1515,5 +1908,7 @@ void libuboot_close(struct uboot_ctx *ctx) {
 }
 
 void libuboot_exit(struct uboot_ctx *ctx) {
+	if (ctx->ctxlist)
+		ctx = ctx->ctxlist;
 	free(ctx);
 }

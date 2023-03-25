@@ -21,7 +21,7 @@ SET_TARGET_PROPERTIES(ubootenv PROPERTIES VERSION ${VERSION} SOVERSION ${SOVERSI
 ADD_LIBRARY(ubootenv_static STATIC ${libubootenv_SOURCES} ${include_HEADERS})
 SET_TARGET_PROPERTIES(ubootenv_static PROPERTIES OUTPUT_NAME ubootenv)
 add_executable(fw_printenv fw_printenv.c)
-target_link_libraries(ubootenv z)
+target_link_libraries(ubootenv z yaml)
 target_link_libraries(fw_printenv ubootenv)
 add_custom_target(fw_setenv ALL ${CMAKE_COMMAND} -E create_symlink fw_printenv fw_setenv)
 

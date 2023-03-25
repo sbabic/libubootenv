@@ -37,6 +37,7 @@ static struct option long_options[] = {
 	{"config", required_argument, NULL, 'c'},
 	{"defenv", required_argument, NULL, 'f'},
 	{"script", required_argument, NULL, 's'},
+	{"namespace", required_argument, NULL, 'm'},
 	{NULL, 0, NULL, 0}
 };
 
@@ -49,6 +50,7 @@ static void usage(char *program, bool setprogram)
 		" -h, --help                       : print this help\n"
 		" -c, --config <filename>          : configuration file (by default: " DEFAULT_CFG_FILE ")\n"
 		" -f, --defenv <filename>          : default environment if no one found (by default: " DEFAULT_ENV_FILE ")\n"
+		" -m, --namespace <name>           : chose one of sets in the YAML file, default first in YAML\n"
 		" -V, --version                    : print version and exit\n"
 	);
 	if (!setprogram)
@@ -74,11 +76,12 @@ static void usage(char *program, bool setprogram)
 }
 
 int main (int argc, char **argv) {
-	struct uboot_ctx *ctx;
-	char *options = "Vc:f:s:nh";
+	struct uboot_ctx *ctx = NULL;
+	char *options = "Vc:f:s:nhm:";
 	char *cfgfname = NULL;
 	char *defenvfile = NULL;
 	char *scriptfile = NULL;
+	char *namespace = NULL;
 	int c, i;
 	int ret = 0;
 	void *tmp;
@@ -120,6 +123,9 @@ int main (int argc, char **argv) {
 		case 'f':
 			defenvfile = strdup(optarg);
 			break;
+		case 'm':
+			namespace = strdup(optarg);
+			break;
 		case 's':
 			scriptfile = strdup(optarg);
 			break;
@@ -129,17 +135,30 @@ int main (int argc, char **argv) {
 	argc -= optind;
 	argv += optind;
 
-	if (libuboot_initialize(&ctx, NULL) < 0) {
-		fprintf(stderr, "Cannot initialize environment\n");
-		exit(1);
-	}
 
 	if (!cfgfname)
 		cfgfname = DEFAULT_CFG_FILE;
 
-	if ((ret = libuboot_read_config(ctx, cfgfname)) < 0) {
-		fprintf(stderr, "Configuration file wrong or corrupted\n");
-		exit (ret);
+	/*
+	 * Try first new format, fallback to legacy
+	 */
+	ret = libuboot_read_multiple_config(&ctx, cfgfname);
+	if (ret) {
+		if (libuboot_initialize(&ctx, NULL) < 0) {
+			fprintf(stderr, "Cannot initialize environment\n");
+			exit(1);
+			}
+		if ((ret = libuboot_read_config(ctx, cfgfname)) < 0) {
+			fprintf(stderr, "Configuration file wrong or corrupted\n");
+			exit (ret);
+		}
+	} else {
+		if (namespace)
+			ctx = libuboot_get_namespace(ctx, namespace);
+		if (!ctx) {
+			fprintf(stderr, "Namespace %s not found\n", namespace);
+			exit (1);
+		}
 	}
 
 	if (!defenvfile)
