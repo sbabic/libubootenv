@@ -103,6 +103,7 @@ Configuration File in YAML
 A YAML format is defined to allow multiple sets of variable. This lets have same features (redundancy, power-cut safe) for
 environment that are not bound to the U-Boot bootloader.
 
+```yaml
 uboot:
   size : 0x4000
   lockfile : /var/lock/fw_printenv.lock
@@ -127,3 +128,4 @@ appvar:
     - path : /dev/mtd1
       offset : 0x10000
       sectorsize : 0x10000
+```
