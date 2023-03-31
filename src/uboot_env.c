@@ -1568,7 +1568,7 @@ int libuboot_read_multiple_config(struct uboot_ctx **ctxlist, const char *config
 	ret = parse_yaml_config(ctxlist, fp);
 	fclose(fp);
 
-	return ret;
+	return (ret > 0) ? -1 : ret;
 }
 
 int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
