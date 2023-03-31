@@ -1909,8 +1909,27 @@ void libuboot_close(struct uboot_ctx *ctx) {
 	}
 }
 
-void libuboot_exit(struct uboot_ctx *ctx) {
-	if (ctx->ctxlist)
+void libuboot_exit(struct uboot_ctx *ctx)
+{
+	struct uboot_ctx *c;
+	int i;
+
+	if (!ctx)
+		return;
+
+	/* passed context might not be list start */
+	if (ctx->ctxlist) {
 		ctx = ctx->ctxlist;
+	} else {
+		/* but in case we don't have a list at all, fixup nelem so that
+		 * we enter the loop to free the name and lockfile correctly */
+		ctx->nelem = 1;
+	}
+
+	for (i = 0, c = ctx; i < ctx->nelem; i++, c++) {
+		free(c->name);
+		free(c->lockfile);
+	}
+
 	free(ctx);
 }
