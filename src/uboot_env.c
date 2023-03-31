@@ -101,14 +101,16 @@ struct parser_state {
 };
 
 /*
- * The lockfile is the same as defined in U-Boot for
- * the fw_printenv utilities
+ * The default lockfile is the same as defined in U-Boot for
+ * the fw_printenv utilities. Custom lockfile can be set via
+ * configuration file.
  */
-	static const char *lockname = "/var/lock/fw_printenv.lock";
+static const char *default_lockname = "/var/lock/fw_printenv.lock";
+
 static int libuboot_lock(struct uboot_ctx *ctx)
 {
 	int lockfd = -1;
-	lockfd = open(lockname, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	lockfd = open(ctx->lockfile ?: default_lockname, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (lockfd < 0) {
 		return -EBUSY;
 	}
