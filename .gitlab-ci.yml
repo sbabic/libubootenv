@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-ubuntu-focal:
-  image: ubuntu:focal
+ubuntu-jammy:
+  image: ubuntu:jammy
   stage: build
   before_script:
     - export DEBIAN_FRONTEND=noninteractive
