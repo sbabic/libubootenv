@@ -1196,6 +1196,7 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 {
 	char *value;
 	struct uboot_flash_env *dev;
+	struct uboot_ctx *newctx;
 	int cdev;
 
 	switch (s->state) {
@@ -1244,7 +1245,6 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 	case STATE_SECTION:
 		switch (event->type) {
 		case YAML_SCALAR_EVENT:
-			struct uboot_ctx *newctx;
 			value = (char *)event->data.scalar.value;
 			newctx = calloc (s->nelem + 1, sizeof(*newctx));
 			for (int i = 0; i < s->nelem; i++) {
