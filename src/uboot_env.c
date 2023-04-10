@@ -1553,25 +1553,7 @@ int libuboot_load_file(struct uboot_ctx *ctx, const char *filename)
 	return 0;
 }
 
-int libuboot_read_multiple_config(struct uboot_ctx **ctxlist, const char *config)
-{
-	FILE *fp;
-	int ret;
-
-	if (!config)
-		return -EINVAL;
-
-	fp = fopen(config, "r");
-	if (!fp)
-		return -EBADF;
-
-	ret = parse_yaml_config(ctxlist, fp);
-	fclose(fp);
-
-	return (ret > 0) ? -1 : ret;
-}
-
-int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
+int libuboot_read_config_ext(struct uboot_ctx **ctxlist, const char *config)
 {
 	FILE *fp;
 	char *line = NULL;
@@ -1581,6 +1563,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	struct uboot_flash_env *dev;
 	char *tmp;
 	int retval = 0;
+	struct uboot_ctx *ctx;
 
 	if (!config)
 		return -EINVAL;
@@ -1589,8 +1572,23 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	if (!fp)
 		return -EBADF;
 
+	if (!*ctxlist) {
+		ret = parse_yaml_config(ctxlist, fp);
+		if (!ret) {
+			fclose(fp);
+			return 0;
+		}
+		ret = libuboot_initialize(ctxlist, NULL);
+		if (ret) {
+			fclose(fp);
+			return ret;
+		}
+	}
+	ctx = *ctxlist;
+
 	dev = ctx->envdevs;
 	ctx->size = 0;
+	rewind(fp);
 
 	while (getline(&line, &bufsize, fp) != -1) {
 		/* skip comments */
@@ -1653,6 +1651,11 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	free(line);
 
 	return retval;
+}
+
+int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
+{
+	return libuboot_read_config_ext(&ctx, config);
 }
 
 static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
