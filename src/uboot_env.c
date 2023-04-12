@@ -106,6 +106,7 @@ struct parser_state {
  * configuration file.
  */
 static const char *default_lockname = "/var/lock/fw_printenv.lock";
+static struct uboot_version_info libinfo;
 
 static int libuboot_lock(struct uboot_ctx *ctx)
 {
@@ -897,6 +898,28 @@ static int set_obsolete_flag(struct uboot_flash_env *dev)
 	close(dev->fd);
 
 	return ret;
+}
+
+const struct uboot_version_info *libuboot_version_info(void)
+{
+	int i;
+	char *endptr = NULL;
+	char *start = VERSION;
+	long val = 0;
+	libinfo.version = VERSION;
+
+	for (i = 0; i < 3; i++) {
+		if (!*start)
+			break;
+		val = val + (strtol(start, &endptr, 10) << (8 * (2 - i)));
+		if (start == endptr)
+			break;
+		start = endptr + 1;
+	}
+
+	libinfo.version_num = val;
+
+	return &libinfo;
 }
 
 int libuboot_env_store(struct uboot_ctx *ctx)

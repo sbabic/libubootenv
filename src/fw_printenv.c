@@ -16,10 +16,6 @@
 
 #include "libuboot.h"
 
-#ifndef VERSION
-#define VERSION "0.1"
-#endif
-
 #ifndef DEFAULT_CFG_FILE
 #define DEFAULT_CFG_FILE "/etc/fw_env.config"
 #endif
@@ -90,6 +86,7 @@ int main (int argc, char **argv) {
 	bool is_setenv = false;
 	bool noheader = false;
 	bool default_used = false;
+	struct uboot_version_info *version;
 
 	/*
 	 * As old tool, there is just a tool with symbolic link
@@ -115,7 +112,7 @@ int main (int argc, char **argv) {
 			noheader = true;
 			break;
 		case 'V':
-			fprintf(stdout, "%s\n", VERSION);
+			fprintf(stdout, "%s %u\n", libuboot_version_info()->version, libuboot_version_info()->version_num);
 			exit(0);
 		case 'h':
 			usage(progname, is_setenv);

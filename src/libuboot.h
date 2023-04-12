@@ -35,6 +35,22 @@ struct uboot_env_device {
 	unsigned long 	envsectors;
 };
 
+/** Static structure to return version ionformation
+ *
+ */
+struct uboot_version_info {
+	/** human readable string */
+	const char *version;
+	/**  <8 bits major number> | <8 bits minor number> | <8 bits patch number> */
+	unsigned int version_num;
+};
+
+/** @brief Return information about library version
+ *
+ * @return Pointer to static uboot_version_info
+ */
+const struct uboot_version_info *libuboot_version_info(void);
+
 /** @brief Read U-Boot environment configuration from a file
  *
  * @param[in] ctx libuboot context
