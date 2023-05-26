@@ -111,11 +111,10 @@ uboot:
     - path : /dev/mtd0
       offset : 0xA0000
       sectorsize : 0x10000
-      unlock : yes
+      disablelock : yes
     - path : /dev/mtd0
       offset : 0xB0000
       sectorsize : 0x10000
-      disable-lock : yes
 
 appvar:
   size : 0x4000
@@ -124,7 +123,7 @@ appvar:
     - path : /dev/mtd1
       offset : 0
       sectorsize : 0x10000
-      unlock : yes
+      disablelock : no
     - path : /dev/mtd1
       offset : 0x10000
       sectorsize : 0x10000

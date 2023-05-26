@@ -1365,7 +1365,7 @@ int consume_event(struct parser_state *s, yaml_event_t *event)
 				s->state = STATE_NOFFSET;
 			} else if (!strcmp(value, "sectorsize")) {
 				s->state = STATE_NSECTORSIZE;
-				} else if (!strcmp(value, "disablelock")) {
+			} else if (!strcmp(value, "disablelock")) {
 				s->state = STATE_NUNLOCK;
 			} else {
 				s->error = YAML_UNEXPECTED_KEY;
