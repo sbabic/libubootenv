@@ -1700,7 +1700,7 @@ static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
 	case TYPE_ATTR_DECIMAL:
 	case TYPE_ATTR_HEX:
 		errno = 0;
-		ok_type = strlen(value) > 2 && (value[0] == 0) &&
+		ok_type = strlen(value) > 2 && (value[0] == '0') &&
 			(value[1] == 'x' || value [1] == 'X');
 		if (ok_type) {
 			test = strtoull(value, NULL, 16);
