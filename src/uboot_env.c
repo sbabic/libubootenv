@@ -759,8 +759,6 @@ static int mtdwrite(struct uboot_flash_env *dev, void *data)
 		sectors = dev->envsectors ? dev->envsectors : 1;
 		buf = data;
 		while (count > 0) {
-			int blockcount;
-
 			erase.start = start;
 
 			skip = is_nand_badblock(dev, start);
@@ -791,26 +789,17 @@ static int mtdwrite(struct uboot_flash_env *dev, void *data)
 				ret =-EIO;
 				goto devwrite_out;
 			}
-
-			blockcount = blocksize;
-
-			/* writesize can be different than the sector size. */
-
-			while (blockcount > 0) {
-				if (lseek(dev->fd, start, SEEK_SET) < 0) {
-					ret =-EIO;
-					goto devwrite_out;
-				}
-				if (write(dev->fd, buf, dev->mtdinfo.writesize) != dev->mtdinfo.writesize) {
-					ret =-EIO;
-					goto devwrite_out;
-				}
-
-				blockcount -= dev->mtdinfo.writesize;
-				start += dev->mtdinfo.writesize;
-				buf += dev->mtdinfo.writesize;
+			if (lseek(dev->fd, start, SEEK_SET) < 0) {
+				ret =-EIO;
+				goto devwrite_out;
+			}
+			if (write(dev->fd, buf, blocksize) != blocksize) {
+				ret =-EIO;
+				goto devwrite_out;
 			}
 			MTDLOCK(dev, &erase);
+			start += dev->sectorsize;
+			buf += blocksize;
 			count -= blocksize;
 			ret += blocksize;
 		}
