@@ -1670,10 +1670,24 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	return libuboot_read_config_ext(&ctx, config);
 }
 
+static bool validate_int(bool hex, const char *value)
+{
+	const char *c;
+
+	for (c = value; c != value + strlen(value); ++c) {
+		if (hex && !isxdigit(*c))
+			return false;
+
+		if (!hex && !isdigit(*c))
+			return false;
+	}
+
+	return true;
+}
+
 static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
 {
 	bool ok_type = true, ok_access = true;
-	unsigned long long test;
 
 	switch (entry->access) {
 	case ACCESS_ATTR_ANY:
@@ -1698,15 +1712,13 @@ static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
 		ok_type = true;
 		break;
 	case TYPE_ATTR_DECIMAL:
+		ok_type = validate_int(false, value);
+		break;
 	case TYPE_ATTR_HEX:
-		errno = 0;
 		ok_type = strlen(value) > 2 && (value[0] == '0') &&
 			(value[1] == 'x' || value [1] == 'X');
-		if (ok_type) {
-			test = strtoull(value, NULL, 16);
-			if (errno)
-				ok_type = false;
-		}
+		if (ok_type)
+			ok_type = validate_int(true, value + 2);
 		break;
 	case TYPE_ATTR_BOOL:
 		ok_access = (value[0] == '1' || value[0] == 'y' || value[0] == 't' ||
