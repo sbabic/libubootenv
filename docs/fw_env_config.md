@@ -105,6 +105,12 @@ A YAML format is defined to allow multiple sets of variable. This lets have same
 features (redundancy, power-cut safe) for environment that are not bound to the
 U-Boot bootloader.
 
+A set is selected by using the `-m/--namespace` argument. In case the bootloader
+tells us where the environment is located by setting the
+`/chosen/u-boot,env-config` property in the devicetree, `fw_printenv/fw_setenv`
+automatically uses the string from this property as a selector for the namespace
+in the YAML config file.
+
 ```yaml
 uboot:
   size : 0x4000
