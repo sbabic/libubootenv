@@ -87,6 +87,9 @@ int main (int argc, char **argv) {
 	bool noheader = false;
 	bool default_used = false;
 	struct uboot_version_info *version;
+	char dt_namespace[32];
+	size_t dt_ret;
+	FILE *fp;
 
 	/*
 	 * As old tool, there is just a tool with symbolic link
@@ -144,8 +147,22 @@ int main (int argc, char **argv) {
 		fprintf(stderr, "Cannot initialize environment\n");
 		exit(1);
 	}
+
 	if (namespace)
 		ctx = libuboot_get_namespace(ctx, namespace);
+	else {
+		fp = fopen("/proc/device-tree/chosen/u-boot,env-config", "r");
+		if(fp) {
+			dt_ret = fread(dt_namespace, 1, sizeof(dt_namespace) - 1, fp);
+			if (dt_ret) {
+				dt_namespace[dt_ret] = 0;
+				ctx = libuboot_get_namespace(ctx, dt_namespace);
+			}
+
+			fclose(fp);
+		}
+	}
+
 	if (!ctx) {
 		fprintf(stderr, "Namespace %s not found\n", namespace);
 		exit (1);
