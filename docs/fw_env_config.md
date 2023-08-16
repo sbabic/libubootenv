@@ -6,8 +6,8 @@ SPDX-License-Identifier:     LGPL-2.1-or-later
 fw_env.config Configuration File- Legacy format
 ================================================
 
-This is the configuration file for fw_{printenv,setenv} utility. It was defined in U-Boot project
-and it is defined here as legacy format.
+This is the configuration file for fw_{printenv,setenv} utility. It was defined
+in U-Boot project and it is defined here as legacy format.
 
 Up to two entries are valid, in this case the redundant
 environment sector is assumed present.
@@ -30,7 +30,8 @@ Entries must be separated by spaces or tabs.
 - Device Offset: offset from start of file or device (mandatory)
 - Environment Size: size of environment (in bytes)
 - Flash Sector Size: (optional) if not set, it is read from kernel
-- Number of Sectors: (optional) number of sectors for environment (mainly used with raw NAND)
+- Number of Sectors: (optional) number of sectors for environment (mainly used
+  with raw NAND)
 - Disable Lock Mechanism : (optional), 0|1, default=0 (LOCK enabled)
 
 
@@ -100,8 +101,9 @@ UBI Volume by Name Example
 Configuration File in YAML
 ==========================
 
-A YAML format is defined to allow multiple sets of variable. This lets have same features (redundancy, power-cut safe) for
-environment that are not bound to the U-Boot bootloader.
+A YAML format is defined to allow multiple sets of variable. This lets have same
+features (redundancy, power-cut safe) for environment that are not bound to the
+U-Boot bootloader.
 
 ```yaml
 uboot:
