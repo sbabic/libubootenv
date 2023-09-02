@@ -6,7 +6,7 @@ SPDX-License-Identifier:     LGPL-2.1-or-later
 libubootenv - Library to access U-Boot environment
 ==================================================
 
-[![Build Status](https://travis-ci.org/sbabic/libubootenv.svg?branch=master)](https://travis-ci.org/sbabic/libubootenv)
+[![pipeline status](https://source.denx.de/swupdate/libubootenv/badges/master/pipeline.svg?ignore_skipped=true)](https://source.denx.de/swupdate/libubootenv/-/commits/master)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/21387/badge.svg)](https://scan.coverity.com/projects/21387)
 [![REUSE status](https://api.reuse.software/badge/github.com/sbabic/libubootenv)](https://api.reuse.software/info/github.com/sbabic/libubootenv)
 
