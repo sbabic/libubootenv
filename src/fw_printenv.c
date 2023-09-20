@@ -77,7 +77,7 @@ int main (int argc, char **argv) {
 	char *cfgfname = NULL;
 	char *defenvfile = NULL;
 	char *scriptfile = NULL;
-	char *namespace = NULL;
+	const char *namespace = NULL;
 	int c, i;
 	int ret = 0;
 	void *tmp;
@@ -87,9 +87,6 @@ int main (int argc, char **argv) {
 	bool noheader = false;
 	bool default_used = false;
 	struct uboot_version_info *version;
-	char dt_namespace[32];
-	size_t dt_ret;
-	FILE *fp;
 
 	/*
 	 * As old tool, there is just a tool with symbolic link
@@ -148,20 +145,11 @@ int main (int argc, char **argv) {
 		exit(1);
 	}
 
+	if (!namespace)
+		namespace = libuboot_namespace_from_dt();
+
 	if (namespace)
 		ctx = libuboot_get_namespace(ctx, namespace);
-	else {
-		fp = fopen("/proc/device-tree/chosen/u-boot,env-config", "r");
-		if(fp) {
-			dt_ret = fread(dt_namespace, 1, sizeof(dt_namespace) - 1, fp);
-			if (dt_ret) {
-				dt_namespace[dt_ret] = 0;
-				ctx = libuboot_get_namespace(ctx, dt_namespace);
-			}
-
-			fclose(fp);
-		}
-	}
 
 	if (!ctx) {
 		fprintf(stderr, "Namespace %s not found\n", namespace);

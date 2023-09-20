@@ -1888,6 +1888,32 @@ struct uboot_ctx *libuboot_get_namespace(struct uboot_ctx *ctxlist, const char *
 	return NULL;
 }
 
+#define MAX_NAMESPACE_LENGTH 64
+const char *libuboot_namespace_from_dt(void)
+{
+	FILE *fp;
+	size_t dt_ret;
+	char *dt_namespace;
+
+	fp = fopen("/proc/device-tree/chosen/u-boot,env-config", "r");
+	if (!fp)
+		return NULL;
+
+	dt_namespace = malloc(MAX_NAMESPACE_LENGTH);
+	if (!dt_namespace) {
+		fclose(fp);
+		return NULL;
+	}
+	dt_ret = fread(dt_namespace, 1, MAX_NAMESPACE_LENGTH - 1, fp);
+	fclose(fp);
+	if (!dt_ret) {
+		free(dt_namespace);
+		return NULL;
+	}
+	dt_namespace[dt_ret] = 0;
+	return dt_namespace;
+}
+
 int libuboot_initialize(struct uboot_ctx **out,
 			struct uboot_env_device *envdevs) {
 	struct uboot_ctx *ctx;

@@ -67,7 +67,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config);
  */
 int libuboot_read_config_ext(struct uboot_ctx **ctx, const char *config);
 
-/** @brief Get ctx from list - this is maintained for compatibility
+/** @brief Get ctx from namespace
  *
  * @param[in] ctxlist libuboot context array
  * @param[in] name name identifier for the single ctx
@@ -75,6 +75,13 @@ int libuboot_read_config_ext(struct uboot_ctx **ctx, const char *config);
  */
 struct uboot_ctx *libuboot_get_namespace(struct uboot_ctx *ctxlist, const char *name);
 
+/** @brief Look for bootloader namespace from DT
+ *
+ * @param[in] ctxlist libuboot context array
+ * @param[in] name name identifier for the single ctx
+ * @return 0 in case of success, else negative value
+ */
+const char *libuboot_namespace_from_dt(void);
 
 /** @brief Read U-Boot environment configuration from structure
  *
