@@ -98,6 +98,14 @@ UBI Volume by Name Example
 | /dev/ubi0:env    |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
 | /dev/ubi0:redund |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
 
+UBI Volume by Name from MTD Path Example
+--------------------------
+
+| Device Name      | Device Offset | Environment Size | Flash Sector Size | Number of Sectors | Disable Lock Mechanism |
+|------------------|---------------|------------------|-------------------|-------------------|------------------------|
+| /dev/mtd0:env    |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
+| /dev/mtd0:redund |     0x0       |      0x1f000     |      0x1f000      |                   |                        |
+
 Configuration File in YAML
 ==========================
 

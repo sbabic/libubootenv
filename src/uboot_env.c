@@ -43,6 +43,9 @@
 
 #define DEVICE_MTD_NAME 		"/dev/mtd"
 #define DEVICE_UBI_NAME 		"/dev/ubi"
+#define DEVICE_UBI_CTRL 		"/dev/ubi_ctrl"
+#define SYS_UBI				"/sys/class/ubi"
+#define SYS_UBI_MTD_NUM			"/sys/class/ubi/ubi%d/mtd_num"
 #define SYS_UBI_VOLUME_COUNT		"/sys/class/ubi/ubi%d/volumes_count"
 #define SYS_UBI_VOLUME_NAME		"/sys/class/ubi/ubi%d/ubi%d_%d/name"
 
@@ -196,7 +199,11 @@ static enum device_type get_device_type(char *device)
 	enum device_type type = DEVICE_NONE;
 
 	if (!strncmp(device, DEVICE_MTD_NAME, strlen(DEVICE_MTD_NAME)))
-		type = DEVICE_MTD;
+		if (strchr(device, DEVNAME_SEPARATOR)) {
+			type = DEVICE_UBI;
+		} else {
+			type = DEVICE_MTD;
+		}
 	else if (!strncmp(device, DEVICE_UBI_NAME, strlen(DEVICE_UBI_NAME)))
 		type = DEVICE_UBI;
 	else if (strlen(device) > 0)
@@ -215,6 +222,77 @@ static int ubi_get_dev_id(char *device)
 		sscanf(sep + 1, "%d", &dev_id);
 
 	return dev_id;
+}
+
+static int mtd_get_dev_id(char *device)
+{
+	int dev_id = -1;
+	char *sep;
+
+	sep = strrchr(device, 'd');
+	if (sep)
+		sscanf(sep + 1, "%d", &dev_id);
+
+	return dev_id;
+}
+
+static int ubi_get_dev_id_from_mtd(char *device)
+{
+	DIR *sysfs_ubi;
+	struct dirent *dirent;
+	int mtd_id;
+
+	mtd_id = mtd_get_dev_id(device);
+	if (mtd_id < 0)
+		return -1;
+
+	sysfs_ubi = opendir(SYS_UBI);
+	if (!sysfs_ubi)
+		return -1;
+
+	while (1) {
+		int ubi_num, ret;
+
+		dirent = readdir(sysfs_ubi);
+		if (!dirent)
+			break;
+
+		if (strlen(dirent->d_name) >= 255) {
+			closedir(sysfs_ubi);
+			return -1;
+		}
+
+		ret = sscanf(dirent->d_name, "ubi%d", &ubi_num);
+		if (ret == 1) {
+			char filename[DEVNAME_MAX_LENGTH];
+			char data[DEVNAME_MAX_LENGTH];
+			int fd, n, num_mtd = -1;
+
+			snprintf(filename, sizeof(filename), SYS_UBI_MTD_NUM, ubi_num);
+			fd = open(filename, O_RDONLY);
+			if (fd < 0)
+				continue;
+
+			n = read(fd, data, sizeof(data));
+			close(fd);
+			if (n < 0)
+				continue;
+
+			if (sscanf(data, "%d", &num_mtd) != 1)
+				num_mtd = -1;
+
+			if (num_mtd < 0)
+				continue;
+
+			if (num_mtd == mtd_id) {
+				closedir(sysfs_ubi);
+				return ubi_num;
+			}
+		}
+	}
+
+	closedir(sysfs_ubi);
+	return -1;
 }
 
 static int ubi_get_num_volume(char *device)
@@ -308,8 +386,47 @@ static int ubi_update_name(struct uboot_flash_env *dev)
 {
 	char device[DEVNAME_MAX_LENGTH];
 	char volume[DEVNAME_MAX_LENGTH];
-	int dev_id, vol_id, ret = -EBADF;
+	int dev_id, vol_id, fd, ret = -EBADF;
+	struct stat st;
 	char *sep;
+
+	if (!strncmp(dev->devname, DEVICE_MTD_NAME, strlen(DEVICE_MTD_NAME)))
+	{
+		sep = strchr(dev->devname, DEVNAME_SEPARATOR);
+		if (sep)
+		{
+			memset(device, 0, DEVNAME_MAX_LENGTH);
+			memcpy(device, dev->devname, sep - dev->devname);
+
+			memset(volume, 0, DEVNAME_MAX_LENGTH);
+			sscanf(sep + 1, "%s", &volume[0]);
+
+			ret = ubi_get_dev_id_from_mtd(device);
+			if (ret < 0) {
+				struct ubi_attach_req req;
+
+				memset(&req, 0, sizeof(struct ubi_attach_req));
+				req.ubi_num = UBI_DEV_NUM_AUTO;
+				req.mtd_num = mtd_get_dev_id(device);
+				req.vid_hdr_offset = 0;
+
+				fd = open(DEVICE_UBI_CTRL, O_RDONLY);
+				if (fd == -1)
+					return -EBADF;
+
+				ret = ioctl(fd, UBI_IOCATT, &req);
+				close(fd);
+				if (ret == -1)
+					return -EBADF;
+
+				sprintf(dev->devname, DEVICE_UBI_NAME"%d:%s", req.ubi_num, volume);
+			} else {
+				sprintf(dev->devname, DEVICE_UBI_NAME"%d:%s", ret, volume);
+			}
+		} else {
+			return -EBADF;
+		}
+	}
 
 	sep = strchr(dev->devname, DEVNAME_SEPARATOR);
 	if (sep)
