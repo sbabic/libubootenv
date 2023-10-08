@@ -8,7 +8,7 @@ project (libubootenv C)
 # The version number.
 # set (libubootenv_VERSION_MAJOR 1)
 # set (libubootenv_VERSION_MAJOR_VERSION_MINOR 0)
-set(VERSION	"0.3.4")
+set(VERSION	"0.3.5")
 SET(SOVERSION "0")
 add_definitions(-DVERSION="${VERSION}")
 
