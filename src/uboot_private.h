@@ -11,8 +11,55 @@
 #include <stdint.h>
 #include <sys/queue.h>
 #include <sys/types.h>
-#include <mtd/mtd-user.h>
 #include "libuboot.h"
+
+#define UBI_MAX_VOLUME			128
+
+#define DEVICE_MTD_NAME 		"/dev/mtd"
+#define DEVICE_UBI_NAME 		"/dev/ubi"
+#define DEVICE_UBI_CTRL 		"/dev/ubi_ctrl"
+#define SYS_UBI				"/sys/class/ubi"
+#define SYS_UBI_MTD_NUM			"/sys/class/ubi/ubi%d/mtd_num"
+#define SYS_UBI_VOLUME_COUNT		"/sys/class/ubi/ubi%d/volumes_count"
+#define SYS_UBI_VOLUME_NAME		"/sys/class/ubi/ubi%d/ubi%d_%d/name"
+
+#if !defined(__FreeBSD__)
+#include <mtd/mtd-user.h>
+#include <mtd/ubi-user.h>
+#define MTDLOCK(dev, psector)	\
+	if (!dev->disable_mtd_lock) ioctl (dev->fd, MEMLOCK, psector)
+#define MTDUNLOCK(dev, psector) \
+	if (!dev->disable_mtd_lock) ioctl (dev->fd, MEMUNLOCK, psector)
+
+#define	LIST_FOREACH_SAFE(var, head, field, tvar)			\
+	for ((var) = LIST_FIRST((head));				\
+	    (var) != NULL &&						\
+	    ((tvar) = LIST_NEXT((var), field), 1);			\
+	    (var) = (tvar))
+#else
+#define MTD_ABSENT		0
+#define MTD_RAM			1
+#define MTD_ROM			2
+#define MTD_NORFLASH		3
+#define MTD_NANDFLASH		4	/* SLC NAND */
+#define MTD_DATAFLASH		6
+#define MTD_UBIVOLUME		7
+#define MTD_MLCNANDFLASH	8	/* MLC NAND (including TLC) */
+#define MTDLOCK
+#define MTDUNLOCK
+
+#define ENODATA ENODEV
+
+struct mtd_info_user {
+	u8 type;
+	u32 flags;
+	u32 size;	/* Total size of the MTD */
+	u32 erasesize;
+	u32 writesize;
+	u32 oobsize;	/* Amount of OOB data per block (e.g. 16) */
+	u64 padding;	/* Old obsolete field; do not use */
+};
+#endif
 
 typedef enum {
 	TYPE_ATTR_STRING,	/* default */
@@ -135,3 +182,23 @@ struct uboot_ctx {
 	/** private pointer to list */
 	struct uboot_ctx *ctxlist;
 };
+
+#if defined(__FreeBSD__)
+#define libubootenv_mtdgetinfo(fd,dev) (-1)
+#define libubootenv_mtdread(dev,data) (-1)
+#define libubootenv_mtdwrite(dev,data) (-1)
+#define libubootenv_ubiread(dev,data) (-1)
+#define libubootenv_ubiwrite(dev,data) (-1)
+#define libubootenv_ubi_update_name(dev) (-1)
+#define libubootenv_set_obsolete_flag(dev) (-1)
+#else
+int libubootenv_mtdgetinfo(int fd, struct uboot_flash_env *dev);
+int libubootenv_mtdread(struct uboot_flash_env *dev, void *data);
+int libubootenv_mtdwrite(struct uboot_flash_env *dev, void *data);
+int libubootenv_ubi_update_name(struct uboot_flash_env *dev);
+int libubootenv_ubiread(struct uboot_flash_env *dev, void *data);
+int libubootenv_ubiwrite(struct uboot_flash_env *dev, void *data);
+int libubootenv_set_obsolete_flag(struct uboot_flash_env *dev);
+#endif
+
+
