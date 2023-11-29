@@ -860,7 +860,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	return ctx->valid ? 0 : -ENODATA;
 }
 
-int consume_event(struct parser_state *s, yaml_event_t *event)
+static int consume_event(struct parser_state *s, yaml_event_t *event)
 {
 	char *value;
 	struct uboot_flash_env *dev;
