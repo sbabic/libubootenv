@@ -1258,13 +1258,25 @@ int libuboot_read_config_ext(struct uboot_ctx **ctxlist, const char *config)
 	ctx->size = 0;
 	rewind(fp);
 
-	while (getline(&line, &bufsize, fp) != -1) {
+	int len;
+	while ((len = getline(&line, &bufsize, fp)) != -1) {
 		/* skip comments */
 		if (line[0] == '#')
 			continue;
 
+#if defined(__FreeBSD__)
+		/*
+		 * POSIX.1-2008 introduced the dynamic allocation conversion
+		 * specifier %m which is not implemented on FreeBSD.
+		 */
+		tmp = calloc(1, len + 1);
+		ret = sscanf(line, "%s %lli %zx %zx %lx %d",
+				tmp,
+#else
+		(void)len;
 		ret = sscanf(line, "%ms %lli %zx %zx %lx %d",
 				&tmp,
+#endif
 				&dev->offset,
 				&dev->envsize,
 				&dev->sectorsize,
@@ -1274,13 +1286,16 @@ int libuboot_read_config_ext(struct uboot_ctx **ctxlist, const char *config)
 		/*
 		 * At least name offset and size should be set
 		 */
-		if (ret < 3 || !tmp)
+		if (ret < 3) {
+			free(tmp);
 			continue;
+		}
 
 		/*
 		 * If size is set but zero, entry is wrong
 		 */
 		if (!dev->envsize) {
+			free(tmp);
 			retval = -EINVAL;
 			break;
 		}
