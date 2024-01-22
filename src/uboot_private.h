@@ -51,13 +51,13 @@
 #define ENODATA ENODEV
 
 struct mtd_info_user {
-	u8 type;
-	u32 flags;
-	u32 size;	/* Total size of the MTD */
-	u32 erasesize;
-	u32 writesize;
-	u32 oobsize;	/* Amount of OOB data per block (e.g. 16) */
-	u64 padding;	/* Old obsolete field; do not use */
+	uint8_t type;
+	uint32_t flags;
+	uint32_t size;		/* Total size of the MTD */
+	uint32_t erasesize;
+	uint32_t writesize;
+	uint32_t oobsize;	/* Amount of OOB data per block (e.g. 16) */
+	uint64_t padding;	/* Old obsolete field; do not use */
 };
 #endif
 
