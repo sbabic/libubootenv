@@ -250,8 +250,18 @@ int libubootenv_ubi_update_name(struct uboot_flash_env *dev)
 
 				ret = ioctl(fd, UBI_IOCATT, &req);
 				close(fd);
-				if (ret == -1)
-					return -EBADF;
+				if (ret == -1) {
+					/* Handle race condition where MTD was already being attached. */
+					if (errno == EEXIST) {
+						ret = ubi_get_dev_id_from_mtd(device);
+						if (ret >= 0)
+							req.ubi_num = ret;
+						else
+							return -EBADF;
+					} else {
+						return -EBADF;
+					}
+				}
 
 				sprintf(dev->devname, DEVICE_UBI_NAME"%d:%s", req.ubi_num, volume);
 			} else {
