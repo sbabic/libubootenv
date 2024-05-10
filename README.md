@@ -26,8 +26,6 @@ can be used with any board - they accept as parameter a file as initial environm
 on the persistent storage. The syntax for the data configuration file is the same as the one
 described in the U-Boot project whilst the syntax of the script file is a subset of the original one.
 
-::
-
         Usage fw_printenv [OPTION]
          -h,                              : print this help
          -c, --config <filename>          : configuration file (by default: /etc/fw_env.config)
