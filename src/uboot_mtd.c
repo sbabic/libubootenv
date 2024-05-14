@@ -218,8 +218,9 @@ out:
 
 int libubootenv_ubi_update_name(struct uboot_flash_env *dev)
 {
+	const size_t VOLNAME_MAX_LENGTH = DEVNAME_MAX_LENGTH - 20;
 	char device[DEVNAME_MAX_LENGTH];
-	char volume[DEVNAME_MAX_LENGTH];
+	char volume[VOLNAME_MAX_LENGTH];
 	int dev_id, vol_id, fd, ret = -EBADF;
 	struct stat st;
 	char *sep;
@@ -232,7 +233,7 @@ int libubootenv_ubi_update_name(struct uboot_flash_env *dev)
 			memset(device, 0, DEVNAME_MAX_LENGTH);
 			memcpy(device, dev->devname, sep - dev->devname);
 
-			memset(volume, 0, DEVNAME_MAX_LENGTH);
+			memset(volume, 0, VOLNAME_MAX_LENGTH);
 			sscanf(sep + 1, "%s", &volume[0]);
 
 			ret = ubi_get_dev_id_from_mtd(device);
@@ -263,9 +264,9 @@ int libubootenv_ubi_update_name(struct uboot_flash_env *dev)
 					}
 				}
 
-				sprintf(dev->devname, DEVICE_UBI_NAME"%d:%s", req.ubi_num, volume);
+				snprintf(dev->devname, sizeof(dev->devname) - 1, DEVICE_UBI_NAME"%d:%s", req.ubi_num, volume);
 			} else {
-				sprintf(dev->devname, DEVICE_UBI_NAME"%d:%s", ret, volume);
+				snprintf(dev->devname, sizeof(dev->devname) - 1, DEVICE_UBI_NAME"%d:%s", ret, volume);
 			}
 		} else {
 			return -EBADF;
@@ -273,6 +274,7 @@ int libubootenv_ubi_update_name(struct uboot_flash_env *dev)
 	}
 
 	sep = strchr(dev->devname, DEVNAME_SEPARATOR);
+	ret = 0;
 	if (sep)
 	{
 		memset(device, 0, DEVNAME_MAX_LENGTH);
@@ -289,10 +291,10 @@ int libubootenv_ubi_update_name(struct uboot_flash_env *dev)
 		if (vol_id < 0)
 			goto out;
 
-		sprintf(dev->devname, "%s_%d", device, vol_id);
+		if (snprintf(dev->devname, sizeof(dev->devname) - 1, "%s_%d", device, vol_id) < 0)
+			ret = -EBADF;
 	}
 
-	ret = 0;
 
 out:
 	return ret;
