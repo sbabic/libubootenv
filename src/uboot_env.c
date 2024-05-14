@@ -138,6 +138,48 @@ static char attr_tostring(type_attribute a)
 	return 's';
 }
 
+static void set_var_access_type(struct var_entry *entry, const char *pvarflags)
+{
+	if (entry) {
+		for (int i = 0; i < strlen(pvarflags); i++) {
+			switch (pvarflags[i]) {
+			case 's':
+				entry->type = TYPE_ATTR_STRING;
+				break;
+			case 'd':
+				entry->type = TYPE_ATTR_DECIMAL;
+				break;
+			case 'x':
+				entry->type = TYPE_ATTR_HEX;
+				break;
+			case 'b':
+				entry->type = TYPE_ATTR_BOOL;
+				break;
+			case 'i':
+				entry->type = TYPE_ATTR_IP;
+				break;
+			case 'm':
+				entry->type = TYPE_ATTR_MAC;
+				break;
+			case 'a':
+				entry->access = ACCESS_ATTR_ANY;
+				break;
+			case 'r':
+				entry->access = ACCESS_ATTR_READ_ONLY;
+				break;
+			case 'o':
+				entry->access = ACCESS_ATTR_WRITE_ONCE;
+				break;
+			case 'c':
+				entry->access = ACCESS_ATTR_CHANGE_DEFAULT;
+				break;
+			default: /* ignore it */
+				break;
+			}
+		}
+	}
+}
+
 static char access_tostring(access_attribute a)
 {
 	switch(a) {
@@ -811,45 +853,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 				*pnext++ = '\0';
 
 			entry = __libuboot_get_env(&ctx->varlist, pvar);
-			if (entry) {
-				for (int i = 0; i < strlen(pval); i++) {
-					switch (pval[i]) {
-					case 's':
-						entry->type = TYPE_ATTR_STRING;
-						break;
-					case 'd':
-						entry->type = TYPE_ATTR_DECIMAL;
-						break;
-					case 'x':
-						entry->type = TYPE_ATTR_HEX;
-						break;
-					case 'b':
-						entry->type = TYPE_ATTR_BOOL;
-						break;
-					case 'i':
-						entry->type = TYPE_ATTR_IP;
-						break;
-					case 'm':
-						entry->type = TYPE_ATTR_MAC;
-						break;
-					case 'a':
-						entry->access = ACCESS_ATTR_ANY;
-						break;
-					case 'r':
-						entry->access = ACCESS_ATTR_READ_ONLY;
-						break;
-					case 'o':
-						entry->access = ACCESS_ATTR_WRITE_ONCE;
-						break;
-					case 'c':
-						entry->access = ACCESS_ATTR_CHANGE_DEFAULT;
-						break;
-					default: /* ignore it */
-						break;
-					}
-				}
-			}
-
+			set_var_access_type(entry, pval);
 			pvar = pnext;
 		}
 	}
