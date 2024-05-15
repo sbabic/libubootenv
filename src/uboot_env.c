@@ -60,6 +60,11 @@ enum yaml_state {
 	STATE_NSIZE,		/* Size key-value pair */
 	STATE_NLOCKFILE,	/* Lockfile key-value pair */
 	STATE_DEVVALUES,	/* Devices key names */
+	STATE_WRITELIST,	/* List with vars that are accepted by write
+				 * if list is missing, all vars are accepted
+				 * var is in the format name:flags, see U-Boot
+				 * documentation
+				 */
 
 	STATE_NPATH,
 	STATE_NOFFSET,
@@ -73,6 +78,9 @@ typedef enum yaml_parse_error_e {
 	YAML_UNEXPECTED_KEY,
 	YAML_BAD_DEVICE,
 	YAML_BAD_DEVNAME,
+	YAML_BAD_VARLIST,
+	YAML_DUPLICATE_VARLIST,
+	YAML_OOM,
 } yaml_parse_error_type_t;
 
 struct parser_state {
@@ -84,6 +92,12 @@ struct parser_state {
 	yaml_parse_error_type_t error;	/* error causing parser to stop */
 	yaml_event_type_t event_type;	/* event type causing error */
 };
+
+#define FREE_ENTRY do { \
+	free(entry->name); \
+	free(entry->value); \
+	free(entry); \
+	} while(0)
 
 /*
  * The default lockfile is the same as defined in U-Boot for
@@ -180,6 +194,22 @@ static void set_var_access_type(struct var_entry *entry, const char *pvarflags)
 	}
 }
 
+static struct var_entry *create_var_entry(const char *name)
+{
+	struct var_entry *entry;
+
+	entry = (struct var_entry *)calloc(1, sizeof(*entry));
+	if (!entry)
+		return NULL;
+	entry->name = strdup(name);
+	if (!entry->name) {
+		free(entry);
+		return NULL;
+	}
+
+	return entry;
+}
+
 static char access_tostring(access_attribute a)
 {
 	switch(a) {
@@ -216,6 +246,147 @@ static void free_var_entry(struct var_entry *entry)
 		free(entry->value);
 		free(entry);
 	}
+}
+
+static bool validate_int(bool hex, const char *value)
+{
+	const char *c;
+
+	for (c = value; c != value + strlen(value); ++c) {
+		if (hex && !isxdigit(*c))
+			return false;
+
+		if (!hex && !isdigit(*c))
+			return false;
+	}
+
+	return true;
+}
+
+static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
+{
+	bool ok_type = true, ok_access = true;
+
+	switch (entry->access) {
+	case ACCESS_ATTR_ANY:
+		ok_access = true;
+		break;
+	case ACCESS_ATTR_READ_ONLY:
+	case ACCESS_ATTR_WRITE_ONCE:
+		ok_access = false;
+		break;
+	case ACCESS_ATTR_CHANGE_DEFAULT:
+		break;
+	}
+
+	if (!ok_access)
+		return false;
+
+	if (!value)
+		return true;
+
+	switch (entry->type) {
+	case TYPE_ATTR_STRING:
+		ok_type = true;
+		break;
+	case TYPE_ATTR_DECIMAL:
+		ok_type = validate_int(false, value);
+		break;
+	case TYPE_ATTR_HEX:
+		ok_type = strlen(value) > 2 && (value[0] == '0') &&
+			(value[1] == 'x' || value [1] == 'X');
+		if (ok_type)
+			ok_type = validate_int(true, value + 2);
+		break;
+	case TYPE_ATTR_BOOL:
+		ok_access = (value[0] == '1' || value[0] == 'y' || value[0] == 't' ||
+			value[0] == 'Y' || value[0] == 'T' ||
+			value[0] == '0' || value[0] == 'n' || value[0] == 'f' ||
+			value[0] == 'N' || value[0] == 'F') && (strlen(value) != 1);
+		break;
+	case TYPE_ATTR_IP:
+	case TYPE_ATTR_MAC:
+		break;
+	}
+	return ok_type;
+}
+
+
+/*
+ * This is used internally with additional parms
+ */
+static int __libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *value, struct var_entry *validate)
+{
+	struct var_entry *entry, *elm, *lastentry;
+	struct vars *envs = &ctx->varlist;
+
+	/* U-Boot setenv treats '=' as an illegal character for variable names */
+	if (strchr(varname, '='))
+		return -EINVAL;
+
+	/*
+	 * Giving empty variable name will lead to having "=value" in U-Boot
+	 * environment which will lead to problem during load of it and U-Boot
+	 * will then load default environment.
+	 */
+	if (*varname == '\0')
+		return -EINVAL;
+
+	entry = __libuboot_get_env(envs, varname);
+	if (entry) {
+		bool valid = libuboot_validate_flags(entry, value);
+		if (validate) {
+			entry->access = validate->access;
+			entry->type = validate->type;
+			valid &= libuboot_validate_flags(entry, value);
+		}
+		if (!valid)
+			return -EPERM;
+		if (!value) {
+			free_var_entry(entry);
+		} else {
+			free(entry->value);
+			entry->value = strdup(value);
+		}
+		return 0;
+	}
+
+	if (!value)
+		return 0;
+
+	entry = create_var_entry(varname);
+	if (!entry)
+		return -ENOMEM;
+
+	entry->value = strdup(value);
+	if (!entry->value) {
+		FREE_ENTRY;
+		return -ENOMEM;
+	}
+
+	if (validate) {
+		entry->access = validate->access;
+		entry->type = validate->type;
+		if (!libuboot_validate_flags(entry, value)) {
+			FREE_ENTRY;
+			return -EPERM;
+		}
+	}
+
+	lastentry = NULL;
+	LIST_FOREACH(elm, envs, next) {
+		if (strcmp(elm->name, varname) > 0) {
+			LIST_INSERT_BEFORE(elm, entry, next);
+			return 0;
+		}
+		lastentry = elm;
+	}
+	if (lastentry)
+		LIST_INSERT_AFTER(lastentry, entry, next);
+	else
+		LIST_INSERT_HEAD(envs, entry, next);
+
+	return 0;
 }
 
 static enum device_type get_device_type(char *device)
@@ -823,7 +994,7 @@ static int libuboot_load(struct uboot_ctx *ctx)
 			if (!strcmp(line, ".flags"))
 				flagsvar = strdup(value);
 			else
-				libuboot_set_env(ctx, line, value);
+				__libuboot_set_env(ctx, line, value, NULL);
 		}
 	}
 
@@ -965,6 +1136,8 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 			} else if (!strcmp(value, "devices")) {
 				s->state = STATE_DEVVALUES;
 				s->cdev = 0;
+			} else if (!strcmp(value, "writelist")) {
+				s->state = STATE_WRITELIST;
 			} else {
 				s->error = YAML_UNEXPECTED_KEY;
 				s->event_type = event->type;
@@ -1044,6 +1217,69 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 				s->event_type = event->type;
 				return FAILURE;
 			}
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_WRITELIST:
+		switch (event->type) {
+
+		char *varflag, *name;
+		struct var_entry *entry;
+
+		case YAML_MAPPING_START_EVENT:
+		case YAML_SEQUENCE_START_EVENT:
+			break;
+		case YAML_MAPPING_END_EVENT:
+			break;
+		case YAML_SEQUENCE_END_EVENT:
+			s->state = STATE_NAMESPACE_FIELDS;
+			break;
+		case YAML_SCALAR_EVENT:
+			value = (char *)event->data.scalar.value;
+
+			/*
+			 * Format is name:flags, split it into two values
+			 */
+			varflag = strchr(value, ':');
+			if (!varflag || varflag > value + (strlen(value) - 1)) {
+				s->error = YAML_BAD_VARLIST;
+				s->event_type = event->type;
+				return FAILURE;
+			}
+			*varflag++ = '\0';
+
+			/*
+			 * Check there is not yet an entry for this variable
+			 */
+			LIST_FOREACH(entry, &s->ctx->writevarlist, next) {
+				if (strcmp(entry->name, value) == 0) {
+					s->error = YAML_DUPLICATE_VARLIST;
+					s->event_type = event->type;
+					return FAILURE;
+				}
+			}
+
+			/*
+			 * Insert variable with its configuration into the list
+			 * of modifiable vars
+			 */
+			entry = create_var_entry(value);
+			if (!entry) {
+				s->error = YAML_OOM;
+				s->event_type = event->type;
+				return FAILURE;
+			}
+			set_var_access_type(entry, varflag);
+			LIST_INSERT_HEAD(&s->ctx->writevarlist, entry, next);
+
+#if !defined(NDEBUG)
+			fprintf(stdout, "Writelist: %s flags %s\n", value, varflag);
+#endif
 			break;
 		default:
 			s->error = YAML_UNEXPECTED_STATE;
@@ -1345,132 +1581,22 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 	return libuboot_read_config_ext(&ctx, config);
 }
 
-static bool validate_int(bool hex, const char *value)
-{
-	const char *c;
-
-	for (c = value; c != value + strlen(value); ++c) {
-		if (hex && !isxdigit(*c))
-			return false;
-
-		if (!hex && !isdigit(*c))
-			return false;
-	}
-
-	return true;
-}
-
-static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
-{
-	bool ok_type = true, ok_access = true;
-
-	switch (entry->access) {
-	case ACCESS_ATTR_ANY:
-		ok_access = true;
-		break;
-	case ACCESS_ATTR_READ_ONLY:
-	case ACCESS_ATTR_WRITE_ONCE:
-		ok_access = false;
-		break;
-	case ACCESS_ATTR_CHANGE_DEFAULT:
-		break;
-	}
-
-	if (!ok_access)
-		return false;
-
-	if (!value)
-		return true;
-
-	switch (entry->type) {
-	case TYPE_ATTR_STRING:
-		ok_type = true;
-		break;
-	case TYPE_ATTR_DECIMAL:
-		ok_type = validate_int(false, value);
-		break;
-	case TYPE_ATTR_HEX:
-		ok_type = strlen(value) > 2 && (value[0] == '0') &&
-			(value[1] == 'x' || value [1] == 'X');
-		if (ok_type)
-			ok_type = validate_int(true, value + 2);
-		break;
-	case TYPE_ATTR_BOOL:
-		ok_access = (value[0] == '1' || value[0] == 'y' || value[0] == 't' ||
-			value[0] == 'Y' || value[0] == 'T' ||
-			value[0] == '0' || value[0] == 'n' || value[0] == 'f' ||
-			value[0] == 'N' || value[0] == 'F') && (strlen(value) != 1);
-		break;
-	case TYPE_ATTR_IP:
-	case TYPE_ATTR_MAC:
-		break;
-	}
-	return ok_type;
-}
-
 int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *value)
 {
-	struct var_entry *entry, *elm, *lastentry;
-	struct vars *envs = &ctx->varlist;
-
-	/* U-Boot setenv treats '=' as an illegal character for variable names */
+	struct var_entry *entry, *entryvarlist = NULL;
 	if (strchr(varname, '='))
 		return -EINVAL;
 
 	/*
-	 * Giving empty variable name will lead to having "=value" in U-Boot
-	 * environment which will lead to problem during load of it and U-Boot
-	 * will then load default environment.
+	 * If there is a list of chosen rw vars,
+	 * first check that variable belongs to the list
 	 */
-	if (*varname == '\0')
-		return -EINVAL;
-
-	entry = __libuboot_get_env(envs, varname);
-	if (entry) {
-		if (libuboot_validate_flags(entry, value)) {
-			if (!value) {
-				free_var_entry(entry);
-			} else {
-				free(entry->value);
-				entry->value = strdup(value);
-			}
-			return 0;
-		} else {
+	if (!LIST_EMPTY(&ctx->writevarlist)) {
+		entryvarlist = __libuboot_get_env(&ctx->writevarlist, varname);
+		if (!entryvarlist)
 			return -EPERM;
-		}
 	}
-
-	if (!value)
-		return 0;
-
-	entry = (struct var_entry *)calloc(1, sizeof(*entry));
-	if (!entry)
-		return -ENOMEM;
-	entry->name = strdup(varname);
-	if (!entry->name) {
-		free(entry);
-		return -ENOMEM;
-	}
-	entry->value = strdup(value);
-	if (!entry->value) {
-		free(entry->name);
-		free(entry);
-		return -ENOMEM;
-	}
-	lastentry = NULL;
-	LIST_FOREACH(elm, envs, next) {
-		if (strcmp(elm->name, varname) > 0) {
-			LIST_INSERT_BEFORE(elm, entry, next);
-			return 0;
-		}
-		lastentry = elm;
-	}
-	if (lastentry)
-		LIST_INSERT_AFTER(lastentry, entry, next);
-	else
-		LIST_INSERT_HEAD(envs, entry, next);
-
-	return 0;
+	return __libuboot_set_env(ctx, varname, value, entryvarlist);
 }
 
 char *libuboot_get_env(struct uboot_ctx *ctx, const char *varname)

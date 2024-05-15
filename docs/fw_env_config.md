@@ -119,10 +119,18 @@ tells us where the environment is located by setting the
 automatically uses the string from this property as a selector for the namespace
 in the YAML config file.
 
+The sequence `writelist` implements the CONFIG_ENV_WRITEABLE_LIST in U-Boot. The list
+is in the same format used in the bootloader: <name>:<flags>. See in bootloader documentation
+for the list of supported flags.
+
 ```yaml
 uboot:
   size : 0x4000
   lockfile : /var/lock/fw_printenv.lock
+  writelist:
+    - var1:sw
+    - var2:sw
+    - var3:dw
   devices:
     - path : /dev/mtd0
       offset : 0xA0000
@@ -136,6 +144,7 @@ uboot:
 appvar:
   size : 0x4000
   lockfile : /var/lock/appvar.lock
+
   devices:
     - path : /dev/mtd1
       offset : 0

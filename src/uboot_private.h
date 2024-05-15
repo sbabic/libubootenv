@@ -173,6 +173,8 @@ struct uboot_ctx {
 	int lock;
 	/** pointer to the internal db */
 	struct vars varlist;
+	/** pointer to the writelist (vars that can be set as writable) */
+	struct vars writevarlist;
 	/** name of the set */
 	char *name;
 	/** lockfile */
