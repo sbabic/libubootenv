@@ -1409,7 +1409,7 @@ cleanup:
 	return status;
 }
 
-#define LINE_LENGTH 1024
+#define LINE_LENGTH 2048
 int libuboot_load_file(struct uboot_ctx *ctx, const char *filename)
 {
 	FILE *fp;
