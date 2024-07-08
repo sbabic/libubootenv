@@ -69,6 +69,7 @@ enum yaml_state {
 	STATE_NPATH,
 	STATE_NOFFSET,
 	STATE_NSECTORSIZE,
+	STATE_NFLAGSTYPE,
 	STATE_NUNLOCK,
 	STATE_STOP      /* end state */
 };
@@ -491,26 +492,28 @@ static int check_env_device(struct uboot_flash_env *dev)
 		}
 	}
 
-	switch (dev->device_type) {
-	case DEVICE_FILE:
-		dev->flagstype = FLAGS_INCREMENTAL;
-		break;
-	case DEVICE_MTD:
-		switch (dev->mtdinfo.type) {
-		case MTD_NORFLASH:
-			dev->flagstype = FLAGS_BOOLEAN;
-			break;
-		case MTD_NANDFLASH:
+	if (dev->flagstype == FLAGS_NONE) {
+		switch (dev->device_type) {
+		case DEVICE_FILE:
 			dev->flagstype = FLAGS_INCREMENTAL;
+			break;
+		case DEVICE_MTD:
+			switch (dev->mtdinfo.type) {
+			case MTD_NORFLASH:
+				dev->flagstype = FLAGS_BOOLEAN;
+				break;
+			case MTD_NANDFLASH:
+				dev->flagstype = FLAGS_INCREMENTAL;
+			};
+			break;
+		case DEVICE_UBI:
+			dev->flagstype = FLAGS_INCREMENTAL;
+			break;
+		default:
+			close(fd);
+			return -EBADF;
 		};
-		break;
-	case DEVICE_UBI:
-		dev->flagstype = FLAGS_INCREMENTAL;
-		break;
-	default:
-		close(fd);
-		return -EBADF;
-	};
+	}
 
 	/*
 	 * Check for negative offsets, treat it as backwards offset
@@ -1210,7 +1213,9 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 				s->state = STATE_NOFFSET;
 			} else if (!strcmp(value, "sectorsize")) {
 				s->state = STATE_NSECTORSIZE;
-				} else if (!strcmp(value, "disablelock")) {
+			} else if (!strcmp(value, "flagstype")) {
+				s->state = STATE_NFLAGSTYPE;
+			} else if (!strcmp(value, "disablelock")) {
 				s->state = STATE_NUNLOCK;
 			} else {
 				s->error = YAML_UNEXPECTED_KEY;
@@ -1329,6 +1334,29 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 			dev = &s->ctx->envdevs[s->cdev];
 			value = (char *)event->data.scalar.value;
 			dev->sectorsize = strtoull(value, NULL, 0);
+			s->state = STATE_DEVVALUES;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_NFLAGSTYPE:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			dev = &s->ctx->envdevs[s->cdev];
+			value = (char *)event->data.scalar.value;
+			if (!strcmp(value, "boolean")) {
+				dev->flagstype = FLAGS_BOOLEAN;
+			} else if (!strcmp(value, "incremental")) {
+				dev->flagstype = FLAGS_INCREMENTAL;
+			} else {
+				s->error = YAML_BAD_DEVNAME;
+				s->event_type = event->type;
+				return FAILURE;
+			}
 			s->state = STATE_DEVVALUES;
 			break;
 		default:
