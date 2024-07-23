@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <sys/queue.h>
 #include <sys/types.h>
+#include <regex.h>
 #include "libuboot.h"
 
 #define UBI_MAX_VOLUME			128
@@ -76,6 +77,19 @@ typedef enum {
 	ACCESS_ATTR_WRITE_ONCE,
 	ACCESS_ATTR_CHANGE_DEFAULT,
 } access_attribute;
+
+typedef struct {
+	int available;
+	type_attribute type;
+	union  {
+		char* re;
+		uint64_t bitmask;
+		struct {
+			int64_t min;
+			int64_t max;
+		} int_range;
+	} u;
+} range_attribute;
 
 enum flags_type {
 	FLAGS_NONE,
@@ -150,6 +164,8 @@ struct var_entry {
 	type_attribute type;
 	/** Permissions for the variable */
 	access_attribute access;
+	/** Range for the variable */
+	range_attribute	range;
 	/** Pointer to next element in the list */
 	LIST_ENTRY(var_entry) next;
 };
