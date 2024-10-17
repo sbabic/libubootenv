@@ -1,6 +1,6 @@
 /*
  * (C) Copyright 2023
- * Stefano Babic, stefano.babic@swupdate.org
+ * Stefano Babic, <stefano.babic@swupdate.org>
  *
  * SPDX-License-Identifier:     LGPL-2.1-or-later
  */

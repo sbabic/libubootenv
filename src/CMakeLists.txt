@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2019-2021 Stefano Babic <sbabic@denx.de>
+# SPDX-FileCopyrightText: 2019-2021 Stefano Babic <stefano.babic@swupdate.org>
 #
 # SPDX-License-Identifier:     LGPL-2.1-or-later
 cmake_minimum_required (VERSION 2.6)
