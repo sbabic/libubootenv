@@ -12,6 +12,8 @@ set(VERSION	"0.3.6")
 SET(SOVERSION "0")
 add_definitions(-DVERSION="${VERSION}")
 
+option(NO_YML_SUPPORT "YML Support")
+
 if(DEFAULT_CFG_FILE)
     add_definitions(-DDEFAULT_CFG_FILE="${DEFAULT_CFG_FILE}")
 endif(DEFAULT_CFG_FILE)
@@ -19,6 +21,10 @@ endif(DEFAULT_CFG_FILE)
 if(DEFAULT_ENV_FILE)
     add_definitions(-DDEFAULT_ENV_FILE="${DEFAULT_ENV_FILE}")
 endif(DEFAULT_ENV_FILE)
+
+if(NO_YML_SUPPORT)
+  add_definitions(-DNO_YAML_SUPPORT)
+endif(NO_YML_SUPPORT)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 

@@ -6,6 +6,9 @@ cmake_minimum_required (VERSION 2.6)
 SET(libubootenv_SOURCES
   uboot_env.c
   uboot_mtd.c
+  extended_config.c
+  common.c
+  common.h
   uboot_private.h
 )
 
@@ -22,7 +25,11 @@ SET_TARGET_PROPERTIES(ubootenv PROPERTIES VERSION ${VERSION} SOVERSION ${SOVERSI
 ADD_LIBRARY(ubootenv_static STATIC ${libubootenv_SOURCES} ${include_HEADERS})
 SET_TARGET_PROPERTIES(ubootenv_static PROPERTIES OUTPUT_NAME ubootenv)
 add_executable(fw_printenv fw_printenv.c)
-target_link_libraries(ubootenv z yaml)
+target_link_libraries(ubootenv z)
+if (NOT NO_YML_SUPPORT)
+target_link_libraries(ubootenv yaml)
+endif(NOT NO_YML_SUPPORT)
+
 target_link_libraries(fw_printenv ubootenv)
 add_custom_target(fw_setenv ALL ${CMAKE_COMMAND} -E create_symlink fw_printenv fw_setenv)
 
