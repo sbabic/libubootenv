@@ -39,6 +39,7 @@
 #include <sys/ioctl.h>
 #include <zlib.h>
 #include <yaml.h>
+#include <regex.h>
 
 #include "uboot_private.h"
 
@@ -152,6 +153,52 @@ static char attr_tostring(type_attribute a)
 	return 's';
 }
 
+static void set_var_access_range(struct var_entry *entry, const char *prangeflags)
+{
+	int ret;
+
+	/* parse regex range r"someregex" */
+	if (!strncmp(prangeflags, "r\"", 2)) {
+		char *rstart = strchr(prangeflags, '"');
+		char *rend = strrchr(prangeflags, '"');
+
+		if (rstart == rend)
+			return;
+
+		rstart++;
+		if (rstart == rend)
+			entry->range.u.re = strdup("");
+
+		*rend++ = '\0';
+		entry->range.u.re = strdup(rstart);
+		entry->range.type = TYPE_ATTR_STRING;
+	}
+	/* parse bitmask range 0x[a-fA-F0-9]+ */
+	else if (!strncmp(prangeflags, "0x", 2)) {
+		entry->range.u.bitmask = (uint64_t) strtol(prangeflags, NULL, 16);
+		entry->range.type = TYPE_ATTR_HEX;
+	}
+
+	/* parse integer range [0-9]+-[0-9]+ */
+	else {
+		char *lhs = strdup(prangeflags);
+		char *rhs = strchr(lhs, '-');
+
+		if (!rhs) {
+			free(lhs);
+			return;
+		}
+
+		*rhs++ = '\0';
+		entry->range.u.int_range.min = strtol(lhs, NULL, 0);
+		entry->range.u.int_range.max = strtol(rhs, NULL, 0);
+		entry->range.type = TYPE_ATTR_DECIMAL;
+		free(lhs);
+	}
+
+	entry->range.available = 1;
+}
+
 static void set_var_access_type(struct var_entry *entry, const char *pvarflags)
 {
 	if (entry) {
@@ -187,6 +234,9 @@ static void set_var_access_type(struct var_entry *entry, const char *pvarflags)
 			case 'c':
 				entry->access = ACCESS_ATTR_CHANGE_DEFAULT;
 				break;
+			case '@':
+				set_var_access_range(entry, &pvarflags[i+1]);
+				return;
 			default: /* ignore it */
 				break;
 			}
@@ -226,6 +276,29 @@ static char access_tostring(access_attribute a)
 	return 'a';
 }
 
+static const char *range_tostring(range_attribute *r)
+{
+	static char range_str[256];
+
+	if (!r->available)
+		return "";
+
+	switch (r->type) {
+	case TYPE_ATTR_STRING:
+		snprintf(range_str, sizeof(range_str), "@r\"%s\"", r->u.re);
+		break;
+	case TYPE_ATTR_DECIMAL:
+		snprintf(range_str, sizeof(range_str), "@%ld-%ld",
+				 r->u.int_range.min, r->u.int_range.max);
+		break;
+	case TYPE_ATTR_HEX:
+			snprintf(range_str, sizeof(range_str), "@0x%lx",
+					 r->u.bitmask);
+	}
+
+	return range_str;
+}
+
 static struct var_entry *__libuboot_get_env(struct vars *envs, const char *varname)
 {
 	struct var_entry *entry;
@@ -242,6 +315,9 @@ static void free_var_entry(struct var_entry *entry)
 {
 	if (entry) {
 		LIST_REMOVE(entry, next);
+		if (entry->range.available
+			&& entry->range.type == TYPE_ATTR_STRING)
+			free(entry->range.u.re);
 		free(entry->name);
 		free(entry->value);
 		free(entry);
@@ -265,7 +341,7 @@ static bool validate_int(bool hex, const char *value)
 
 static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
 {
-	bool ok_type = true, ok_access = true;
+	bool ok_type = true, ok_access = true, okay_range = true;
 
 	switch (entry->access) {
 	case ACCESS_ATTR_ANY:
@@ -308,7 +384,48 @@ static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
 	case TYPE_ATTR_MAC:
 		break;
 	}
-	return ok_type;
+
+	if (entry->range.available) {
+		switch (entry->type) {
+		case TYPE_ATTR_STRING:
+			if (ok_type) {
+				int ret;
+				regex_t re;
+
+				ret = regcomp(&re, entry->range.u.re, REG_EXTENDED);
+				if (ret) {
+					okay_range = false;
+					break;
+				}
+
+				ret = regexec(&re, value, 0, NULL, 0);
+				okay_range = !ret;
+				regfree(&re);
+			}
+			break;
+		case TYPE_ATTR_DECIMAL:
+			if (ok_type) {
+				int64_t ival;
+
+				ival = strtol(value, NULL, 10);
+				okay_range = ival >= entry->range.u.int_range.min
+							 && ival <= entry->range.u.int_range.max;
+			}
+			break;
+		case TYPE_ATTR_HEX:
+			if (ok_type) {
+				uint64_t ival;
+
+				ival = strtol(value, NULL, 16);
+				okay_range = !!(ival & entry->range.u.bitmask);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	return ok_type & okay_range;
 }
 
 
@@ -338,6 +455,7 @@ static int __libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const 
 		if (validate) {
 			entry->access = validate->access;
 			entry->type = validate->type;
+			entry->range = validate->range;
 			valid &= libuboot_validate_flags(entry, value);
 		}
 		if (!valid)
@@ -367,6 +485,7 @@ static int __libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const 
 	if (validate) {
 		entry->access = validate->access;
 		entry->type = validate->type;
+		entry->range = validate->range;
 		if (!libuboot_validate_flags(entry, value)) {
 			FREE_ENTRY;
 			return -EPERM;
@@ -829,12 +948,13 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 
 		LIST_FOREACH(entry, &ctx->varlist, next) {
 			size = (ctx->size - offsetdata)  - (buf - data);
-			if (entry->type || entry->access) {
-				buf += snprintf(buf, size, "%s%s:%c%c",
+			if (entry->type || entry->access || entry->range.available) {
+				buf += snprintf(buf, size, "%s%s:%c%c%s",
 						first ? "" : ",",
 						entry->name,
 						attr_tostring(entry->type),
-						access_tostring(entry->access));
+						access_tostring(entry->access),
+						range_tostring(&entry->range));
 				first = false;
 			}
 		}
