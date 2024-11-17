@@ -144,11 +144,26 @@ $(function() {
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">/dev/ubi0:redund   </td><td class="markdownTableBodyNone">0x0   </td><td class="markdownTableBodyNone">0x1f000   </td><td class="markdownTableBodyNone">0x1f000   </td><td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone"></td></tr>
 </table>
+<h2>UBI Volume by Name from MTD Path Example </h2>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Device Name   </th><th class="markdownTableHeadNone">Device Offset   </th><th class="markdownTableHeadNone">Environment Size   </th><th class="markdownTableHeadNone">Flash Sector Size   </th><th class="markdownTableHeadNone">Number of Sectors   </th><th class="markdownTableHeadNone">Disable Lock Mechanism    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">/dev/mtd0:env   </td><td class="markdownTableBodyNone">0x0   </td><td class="markdownTableBodyNone">0x1f000   </td><td class="markdownTableBodyNone">0x1f000   </td><td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone"></td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">/dev/mtd0:redund   </td><td class="markdownTableBodyNone">0x0   </td><td class="markdownTableBodyNone">0x1f000   </td><td class="markdownTableBodyNone">0x1f000   </td><td class="markdownTableBodyNone"></td><td class="markdownTableBodyNone"></td></tr>
+</table>
 <h1>Configuration File in YAML </h1>
 <p>A YAML format is defined to allow multiple sets of variable. This lets have same features (redundancy, power-cut safe) for environment that are not bound to the U-Boot bootloader.</p>
+<p>A set is selected by using the <code>-m/--namespace</code> argument. In case the bootloader tells us where the environment is located by setting the <code>/chosen/u-boot,env-config</code> property in the devicetree, <code>fw_printenv/fw_setenv</code> automatically uses the string from this property as a selector for the namespace in the YAML config file.</p>
+<p>The sequence <code>writelist</code> implements the CONFIG_ENV_WRITEABLE_LIST in U-Boot. The list is in the same format used in the bootloader: &lt;name&gt;:&lt;flags&gt;. See in bootloader documentation for the list of supported flags.</p>
 <div class="fragment"><div class="line">uboot:</div>
 <div class="line">  size : 0x4000</div>
 <div class="line">  lockfile : /var/lock/fw_printenv.lock</div>
+<div class="line">  writelist:</div>
+<div class="line">    - var1:sw</div>
+<div class="line">    - var2:sw</div>
+<div class="line">    - var3:dw</div>
 <div class="line">  devices:</div>
 <div class="line">    - path : /dev/mtd0</div>
 <div class="line">      offset : 0xA0000</div>
@@ -162,6 +177,7 @@ $(function() {
 <div class="line">appvar:</div>
 <div class="line">  size : 0x4000</div>
 <div class="line">  lockfile : /var/lock/appvar.lock</div>
+<div class="line"> </div>
 <div class="line">  devices:</div>
 <div class="line">    - path : /dev/mtd1</div>
 <div class="line">      offset : 0</div>

@@ -1,29 +1,56 @@
 <map id="uboot_env.c" name="uboot_env.c">
-<area shape="rect" id="node1" title="This is the implementation of libubootenv library." alt="" coords="917,5,1008,32"/>
-<area shape="rect" id="node2" title=" " alt="" coords="5,80,67,107"/>
-<area shape="rect" id="node3" title=" " alt="" coords="91,80,155,107"/>
-<area shape="rect" id="node4" title=" " alt="" coords="107,155,173,181"/>
-<area shape="rect" id="node5" title=" " alt="" coords="467,80,536,107"/>
-<area shape="rect" id="node6" title=" " alt="" coords="561,80,626,107"/>
-<area shape="rect" id="node7" title=" " alt="" coords="650,80,718,107"/>
-<area shape="rect" id="node8" title=" " alt="" coords="743,80,807,107"/>
-<area shape="rect" id="node9" title=" " alt="" coords="831,80,905,107"/>
-<area shape="rect" id="node10" title=" " alt="" coords="930,80,995,107"/>
-<area shape="rect" id="node11" title=" " alt="" coords="1020,80,1079,107"/>
-<area shape="rect" id="node12" title=" " alt="" coords="1103,80,1166,107"/>
-<area shape="rect" id="node13" title=" " alt="" coords="1190,80,1255,107"/>
-<area shape="rect" id="node14" title=" " alt="" coords="1280,80,1347,107"/>
-<area shape="rect" id="node15" title=" " alt="" coords="1371,80,1445,107"/>
-<area shape="rect" id="node16" title=" " alt="" coords="197,155,288,181"/>
-<area shape="rect" id="node17" title=" " alt="" coords="1469,80,1549,107"/>
-<area shape="rect" id="node18" title=" " alt="" coords="1573,80,1656,107"/>
-<area shape="rect" id="node19" title=" " alt="" coords="1680,80,1763,107"/>
-<area shape="rect" id="node20" title=" " alt="" coords="1787,80,1840,107"/>
-<area shape="rect" id="node21" title=" " alt="" coords="1864,80,1925,107"/>
-<area shape="rect" id="node22" title=" " alt="" coords="312,155,421,181"/>
-<area shape="rect" id="node23" title=" " alt="" coords="1949,80,2053,107"/>
-<area shape="rect" id="node24" href="$uboot__private_8h_source.html" title=" " alt="" coords="331,80,442,107"/>
-<area shape="rect" id="node25" title=" " alt="" coords="445,155,520,181"/>
-<area shape="rect" id="node26" title=" " alt="" coords="544,155,637,181"/>
-<area shape="rect" id="node27" href="$libuboot_8h_source.html" title=" " alt="" coords="662,155,741,181"/>
+<area shape="rect" id="Node000001" title="This is the implementation of libubootenv library." alt="" coords="785,5,885,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,72,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="784,23,663,27,492,37,292,55,86,81,85,76,291,49,491,32,663,22,784,18"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="97,79,167,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="785,25,528,43,358,59,187,81,182,82,181,77,186,76,358,54,527,38,784,19"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="113,225,183,251"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="784,23,670,27,527,37,390,54,335,66,295,81,252,110,215,146,185,183,164,215,159,212,181,180,211,142,248,106,292,76,333,61,389,49,527,32,670,22,784,18"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="459,79,533,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="785,32,548,81,547,76,784,27"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="557,79,629,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="797,33,644,78,642,73,795,28"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="653,79,728,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="813,33,728,75,725,70,810,28"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="753,79,823,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="829,32,805,69,801,66,825,30"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="847,79,918,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="845,30,870,66,865,69,840,33"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="942,79,1005,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="858,28,940,70,937,75,856,33"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="1029,79,1097,104"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="872,28,1016,73,1014,78,871,33"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="1121,79,1191,104"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="885,27,1108,76,1107,81,884,32"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="1215,79,1289,104"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="885,24,1024,44,1202,76,1201,81,1024,50,885,29"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="1313,79,1393,104"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="885,22,1064,42,1300,76,1299,81,1064,47,885,27"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="208,225,304,251"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="785,22,674,23,537,31,470,38,409,49,358,63,323,81,296,110,278,145,267,181,261,212,256,211,262,180,273,143,292,107,320,77,356,58,407,44,469,33,537,26,674,18,785,16"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="1417,79,1503,104"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="885,20,1106,39,1252,55,1404,76,1403,81,1252,61,1106,45,885,26"/>
+<area shape="rect" id="Node000017" title=" " alt="" coords="1527,79,1615,104"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="885,19,1150,37,1328,53,1513,76,1512,81,1328,59,1149,42,885,24"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="1639,79,1727,104"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="885,18,1194,34,1406,51,1625,76,1624,81,1405,56,1193,39,885,24"/>
+<area shape="rect" id="Node000019" title=" " alt="" coords="1751,79,1809,104"/>
+<area shape="poly" id="edge18_Node000001_Node000019" title=" " alt="" coords="885,16,1029,18,1238,26,1484,44,1612,58,1738,76,1738,82,1611,63,1484,49,1238,31,1029,23,885,22"/>
+<area shape="rect" id="Node000020" href="$uboot__private_8h_source.html" title=" " alt="" coords="327,152,451,177"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="785,24,667,31,524,42,399,59,356,69,334,80,328,95,333,111,346,127,362,142,359,145,342,131,329,113,323,95,330,77,354,64,398,54,524,37,667,26,784,19"/>
+<area shape="rect" id="Node000026" href="$common_8h_source.html" title=" " alt="" coords="344,79,435,104"/>
+<area shape="poly" id="edge27_Node000001_Node000026" title=" " alt="" coords="785,29,449,81,448,76,784,24"/>
+<area shape="poly" id="edge21_Node000020_Node000004" title=" " alt="" coords="351,180,198,225,196,220,350,175"/>
+<area shape="poly" id="edge23_Node000020_Node000015" title=" " alt="" coords="369,180,291,221,289,216,367,175"/>
+<area shape="rect" id="Node000021" title=" " alt="" coords="852,225,935,251"/>
+<area shape="poly" id="edge20_Node000020_Node000021" title=" " alt="" coords="452,170,622,191,839,223,838,228,622,196,451,175"/>
+<area shape="rect" id="Node000022" title=" " alt="" coords="329,225,429,251"/>
+<area shape="poly" id="edge22_Node000020_Node000022" title=" " alt="" coords="390,178,385,212,380,211,385,177"/>
+<area shape="rect" id="Node000023" href="$libuboot_8h_source.html" title=" " alt="" coords="453,225,539,251"/>
+<area shape="poly" id="edge24_Node000020_Node000023" title=" " alt="" coords="408,175,469,215,466,220,405,180"/>
+<area shape="rect" id="Node000024" title=" " alt="" coords="564,225,687,251"/>
+<area shape="poly" id="edge25_Node000020_Node000024" title=" " alt="" coords="428,175,575,219,573,224,426,180"/>
+<area shape="rect" id="Node000025" title=" " alt="" coords="711,225,827,251"/>
+<area shape="poly" id="edge26_Node000020_Node000025" title=" " alt="" coords="451,175,698,221,697,226,450,180"/>
+<area shape="poly" id="edge28_Node000026_Node000020" title=" " alt="" coords="392,104,392,138,387,138,387,104"/>
 </map>

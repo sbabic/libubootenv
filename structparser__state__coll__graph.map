@@ -1,5 +1,8 @@
 <map id="parser_state" name="parser_state">
-<area shape="rect" id="node1" title=" " alt="" coords="17,199,111,225"/>
-<area shape="rect" id="node2" href="$structuboot__ctx.html" title=" " alt="" coords="25,95,103,121"/>
-<area shape="rect" id="node3" href="$structuboot__flash__env.html" title=" " alt="" coords="5,5,123,32"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="18,196,121,221"/>
+<area shape="rect" id="Node000002" href="$structuboot__ctx.html" title=" " alt="" coords="26,93,113,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="72,133,72,196,67,196,67,133"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="127,97,135,100,139,106,131,114,113,117,112,111,129,109,134,106,132,104,125,102"/>
+<area shape="rect" id="Node000003" href="$structuboot__flash__env.html" title=" " alt="" coords="5,5,133,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="72,45,72,93,67,93,67,45"/>
 </map>
