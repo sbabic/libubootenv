@@ -204,26 +204,28 @@ int check_env_device(struct uboot_flash_env *dev)
 		}
 	}
 
-	switch (dev->device_type) {
-	case DEVICE_FILE:
-		dev->flagstype = FLAGS_INCREMENTAL;
-		break;
-	case DEVICE_MTD:
-		switch (dev->mtdinfo.type) {
-		case MTD_NORFLASH:
-			dev->flagstype = FLAGS_BOOLEAN;
-			break;
-		case MTD_NANDFLASH:
+	if (dev->flagstype == FLAGS_NONE) {
+		switch (dev->device_type) {
+		case DEVICE_FILE:
 			dev->flagstype = FLAGS_INCREMENTAL;
+			break;
+		case DEVICE_MTD:
+			switch (dev->mtdinfo.type) {
+			case MTD_NORFLASH:
+				dev->flagstype = FLAGS_BOOLEAN;
+				break;
+			case MTD_NANDFLASH:
+				dev->flagstype = FLAGS_INCREMENTAL;
+			};
+			break;
+		case DEVICE_UBI:
+			dev->flagstype = FLAGS_INCREMENTAL;
+			break;
+		default:
+			close(fd);
+			return -EBADF;
 		};
-		break;
-	case DEVICE_UBI:
-		dev->flagstype = FLAGS_INCREMENTAL;
-		break;
-	default:
-		close(fd);
-		return -EBADF;
-	};
+	}
 
 	/*
 	 * Check for negative offsets, treat it as backwards offset

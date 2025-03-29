@@ -53,6 +53,7 @@ enum yaml_state {
 	STATE_NOFFSET,
 	STATE_NSECTORSIZE,
 	STATE_NUNLOCK,
+	STATE_FLAGSTYPE,
 	STATE_STOP      /* end state */
 };
 
@@ -251,8 +252,10 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 				s->state = STATE_NOFFSET;
 			} else if (!strcmp(value, "sectorsize")) {
 				s->state = STATE_NSECTORSIZE;
-				} else if (!strcmp(value, "disablelock")) {
+			} else if (!strcmp(value, "disablelock")) {
 				s->state = STATE_NUNLOCK;
+			} else if (!strcmp(value, "flagstype")) {
+				s->state = STATE_FLAGSTYPE;
 			} else {
 				s->error = YAML_UNEXPECTED_KEY;
 				s->event_type = event->type;
@@ -387,6 +390,30 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 			if (!strcmp(value, "yes"))
 				dev->disable_mtd_lock = 1;
 			s->state = STATE_DEVVALUES;
+			break;
+		default:
+			s->error = YAML_UNEXPECTED_STATE;
+			s->event_type = event->type;
+			return FAILURE;
+		}
+		break;
+
+	case STATE_FLAGSTYPE:
+		switch (event->type) {
+		case YAML_SCALAR_EVENT:
+			dev = &s->ctx->envdevs[s->cdev];
+			value = (char *)event->data.scalar.value;
+			if (!strcmp(value, "boolean")) {
+				dev->flagstype = FLAGS_BOOLEAN;
+				s->state = STATE_DEVVALUES;
+			} else if (!strcmp(value, "incremental")) {
+				dev->flagstype = FLAGS_INCREMENTAL;
+				s->state = STATE_DEVVALUES;
+			} else {
+				s->error = YAML_UNEXPECTED_KEY;
+				s->event_type = event->type;
+				return FAILURE;
+			}
 			break;
 		default:
 			s->error = YAML_UNEXPECTED_STATE;
