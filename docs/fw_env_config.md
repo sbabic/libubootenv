@@ -139,7 +139,7 @@ uboot:
     - path : /dev/mtd0
       offset : 0xB0000
       sectorsize : 0x10000
-      disable-lock : yes
+      disablelock : yes
 
 appvar:
   size : 0x4000
