@@ -428,6 +428,11 @@ int parse_yaml_config(struct uboot_ctx **ctxlist, FILE *fp)
 		}
 	} while (state.state != STATE_STOP);
 
+	if (state.nelem == 0) {
+		status = FAILURE;
+		goto cleanup;
+	}
+
 	state.ctxsets[0].nelem = state.nelem;
 
 	for (int i = 0; i < state.nelem; i++) {
