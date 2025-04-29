@@ -280,7 +280,7 @@ int libubootenv_ubi_update_name(struct uboot_flash_env *dev)
 		memset(device, 0, DEVNAME_MAX_LENGTH);
 		memcpy(device, dev->devname, sep - dev->devname);
 
-		memset(volume, 0, DEVNAME_MAX_LENGTH);
+		memset(volume, 0, VOLNAME_MAX_LENGTH);
 		sscanf(sep + 1, "%s", &volume[0]);
 
 		dev_id = ubi_get_dev_id(device);
