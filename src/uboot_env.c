@@ -871,6 +871,7 @@ int libuboot_read_config_ext(struct uboot_ctx **ctxlist, const char *config)
 				tmp,
 #else
 		(void)len;
+		tmp = NULL;
 		ret = sscanf(line, "%ms %lli %zx %zx %lx %d",
 				&tmp,
 #endif
