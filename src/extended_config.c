@@ -131,6 +131,8 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 		case YAML_SCALAR_EVENT:
 			value = (char *)event->data.scalar.value;
 			newctx = calloc (s->nelem + 1, sizeof(*newctx));
+			if (newctx == NULL)
+				return FAILURE;
 			for (int i = 0; i < s->nelem; i++) {
 				newctx[i] = s->ctxsets[i];
 			}
