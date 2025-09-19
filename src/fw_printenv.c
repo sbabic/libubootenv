@@ -86,7 +86,6 @@ int main (int argc, char **argv) {
 	bool is_setenv = false;
 	bool noheader = false;
 	bool default_used = false;
-	struct uboot_version_info *version;
 
 	/*
 	 * As old tool, there is just a tool with symbolic link
