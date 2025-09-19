@@ -941,7 +941,7 @@ int libuboot_read_config(struct uboot_ctx *ctx, const char *config)
 
 int libuboot_set_env(struct uboot_ctx *ctx, const char *varname, const char *value)
 {
-	struct var_entry *entry, *entryvarlist = NULL;
+	struct var_entry *entryvarlist = NULL;
 	if (strchr(varname, '='))
 		return -EINVAL;
 
