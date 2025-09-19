@@ -222,7 +222,6 @@ int libubootenv_ubi_update_name(struct uboot_flash_env *dev)
 	char device[DEVNAME_MAX_LENGTH];
 	char volume[VOLNAME_MAX_LENGTH];
 	int dev_id, vol_id, fd, ret = -EBADF;
-	struct stat st;
 	char *sep;
 
 	if (!strncmp(dev->devname, DEVICE_MTD_NAME, strlen(DEVICE_MTD_NAME)))
