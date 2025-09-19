@@ -81,7 +81,6 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 	char *value;
 	struct uboot_flash_env *dev;
 	struct uboot_ctx *newctx;
-	int cdev;
 
 	switch (s->state) {
 	case STATE_START:
@@ -271,7 +270,7 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 	case STATE_WRITELIST:
 		switch (event->type) {
 
-		char *varflag, *name;
+		char *varflag;
 		struct var_entry *entry;
 
 		case YAML_MAPPING_START_EVENT:
