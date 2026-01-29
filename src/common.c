@@ -66,7 +66,8 @@ int normalize_device_path(char *path, struct uboot_flash_env *dev)
 	if ((normalized = realpath(path, NULL)) == NULL)
 	{
 		/* device file didn't exist */
-		return -EINVAL;
+		normalized = malloc(PATH_MAX);
+		strncpy(normalized, path, PATH_MAX - 1);
 	}
 
 	normalized_len = strlen(normalized);
@@ -184,8 +185,10 @@ int check_env_device(struct uboot_flash_env *dev)
 	}
 
 	ret = stat(dev->devname, &st);
-	if (ret < 0)
-		return -EBADF;
+	if (ret < 0) {
+		/* device is not readable, no further checks possible */
+		return 0;
+	}
 	fd = open(dev->devname, O_RDONLY);
 	if (fd < 0)
 		return -EBADF;
