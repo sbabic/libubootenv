@@ -396,8 +396,8 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 		}
 		break;
 
-    case STATE_STOP:
-        break;
+	case STATE_STOP:
+		break;
     }
     return SUCCESS;
 }
