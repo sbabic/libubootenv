@@ -582,6 +582,8 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 		case FLAGS_BOOLEAN:
 			flags = 1;
 			break;
+		case FLAGS_NONE:
+			break;
 		}
 		((struct uboot_env_redund *)image)->flags = flags;
 	}
@@ -674,6 +676,8 @@ static int libuboot_load(struct uboot_ctx *ctx)
 			else
 				ctx->current = 0;
 			switch (ctx->envdevs[0].flagstype) {
+			case FLAGS_NONE:
+				break;
 			case FLAGS_BOOLEAN:
 				if (ctx->envdevs[1].flags == 0xFF)
 					ctx->current = 1;
