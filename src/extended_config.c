@@ -39,7 +39,6 @@ enum yaml_state {
 
 	STATE_NAMESPACE,	/* Init Configuration Namespace */
 	STATE_NAMESPACE_FIELDS,	/* namespace key list */
-	STATE_NKEY,		/* Check key names */
 	STATE_NSIZE,		/* Size key-value pair */
 	STATE_NLOCKFILE,	/* Lockfile key-value pair */
 	STATE_DEVVALUES,	/* Devices key names */
