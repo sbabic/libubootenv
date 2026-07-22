@@ -53,7 +53,11 @@ extern int parse_yaml_config(struct uboot_ctx **ctxlist, FILE *fp);
  * the fw_printenv utilities. Custom lockfile can be set via
  * configuration file.
  */
+#if defined(__FreeBSD__)
+static const char *default_lockname = "/var/run/fw_printenv.lock";
+#else
 static const char *default_lockname = "/var/lock/fw_printenv.lock";
+#endif
 static struct uboot_version_info libinfo;
 
 static int libuboot_lock(struct uboot_ctx *ctx)
