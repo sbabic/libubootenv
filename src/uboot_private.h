@@ -48,7 +48,9 @@
 #define MTDLOCK
 #define MTDUNLOCK
 
+#if !defined(ENODATA)
 #define ENODATA ENODEV
+#endif
 
 struct mtd_info_user {
 	uint8_t type;
