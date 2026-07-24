@@ -201,10 +201,13 @@ static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
 			ok_type = validate_int(true, value + 2);
 		break;
 	case TYPE_ATTR_BOOL:
-		ok_access = (value[0] == '1' || value[0] == 'y' || value[0] == 't' ||
-			value[0] == 'Y' || value[0] == 'T' ||
-			value[0] == '0' || value[0] == 'n' || value[0] == 'f' ||
-			value[0] == 'N' || value[0] == 'F') && (strlen(value) != 1);
+		ok_type = !strcmp(value, "1") || !strcmp(value, "0") ||
+			!strcmp(value, "y") || !strcmp(value, "n") ||
+			!strcmp(value, "t") || !strcmp(value, "f") ||
+			!strcmp(value, "Y") || !strcmp(value, "N") ||
+			!strcmp(value, "T") || !strcmp(value, "F") ||
+			!strcmp(value, "yes") || !strcmp(value, "no") ||
+			!strcmp(value, "true") || !strcmp(value, "false");
 		break;
 	case TYPE_ATTR_IP:
 	case TYPE_ATTR_MAC:
