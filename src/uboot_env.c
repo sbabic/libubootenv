@@ -541,17 +541,15 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 	int ret;
 	int copy;
 
-	/*
-	 * Allocate the bigger of the case
-	 */
-	image = malloc(sizeof(struct uboot_env_redund) + ctx->size);
+	offsetdata = ctx->redundant
+		? offsetof(struct uboot_env_redund, data)
+		: offsetof(struct uboot_env_noredund, data);
+	if (ctx->size <= offsetdata)
+		return -EINVAL;
+
+	image = malloc(ctx->size);
 	if (!image)
 		return -ENOMEM;
-
-	if (ctx->redundant)
-		offsetdata = offsetof(struct uboot_env_redund, data);
-	else
-		offsetdata = offsetof(struct uboot_env_noredund, data);
 
 	data = (char *)(image + offsetdata);
 
@@ -650,6 +648,9 @@ static int libuboot_load(struct uboot_ctx *ctx)
 		offsetdata = offsetof(struct uboot_env_redund, data);
 		offsetcrc = offsetof(struct uboot_env_redund, crc);
 	}
+	if (ctx->size <= offsetdata)
+		return -EINVAL;
+
 	usable_envsize = ctx->size - offsetdata;
 	buf[0] = malloc(bufsize);
 	if (!buf[0])
