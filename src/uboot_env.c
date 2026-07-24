@@ -211,6 +211,10 @@ static bool libuboot_validate_flags(struct var_entry *entry, const char *value)
 		break;
 	case TYPE_ATTR_IP:
 	case TYPE_ATTR_MAC:
+		/* 
+		 * Not validated. libubootenv does not interpret these values. 
+		 * In the worst case, U-Boot would reject those on boot.
+		 */
 		break;
 	}
 	return ok_type;
