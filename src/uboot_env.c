@@ -725,17 +725,18 @@ static int libuboot_load(struct uboot_ctx *ctx)
 	char *flagsvar = NULL;
 
 	if (ctx->valid) {
-		for (line = data; *line; line = next + 1) {
+		for (line = data; (line - data) < usable_envsize && *line; line = next + 1) {
 			char *value;
 
 			/*
 			 * Search the end of the string pointed by line
 			 */
-			for (next = line; *next; ++next) {
-				if ((next - (char *)data) > usable_envsize) {
-					free(buf[0]);
-					return -EIO;
-				}
+			for (next = line; (next - data) < usable_envsize && *next; ++next)
+				;
+
+			if ((next - data) >= usable_envsize) {
+				free(buf[0]);
+				return -EIO;
 			}
 
 			value = strchr(line, '=');
