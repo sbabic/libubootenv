@@ -151,6 +151,9 @@ static bool validate_int(bool hex, const char *value)
 {
 	const char *c;
 
+	if (!*value)
+		return false;
+
 	for (c = value; c != value + strlen(value); ++c) {
 		if (hex && !isxdigit(*c))
 			return false;
