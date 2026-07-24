@@ -65,11 +65,15 @@ static int libuboot_lock(struct uboot_ctx *ctx)
 	int lockfd = -1;
 	lockfd = open(ctx->lockfile ?: default_lockname, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (lockfd < 0) {
+		/*
+		 * Note: flock() failures are likely API usage errors, hence
+		 * use EBUSY as general lockfile-related error code.
+		 */
 		return -EBUSY;
 	}
 	if (flock(lockfd, LOCK_EX) < 0) {
 		close(lockfd);
-		return -EIO;
+		return -EBUSY;
 	}
 
 	ctx->lock = lockfd;
@@ -1106,7 +1110,10 @@ int libuboot_initialize(struct uboot_ctx **out,
 int libuboot_open(struct uboot_ctx *ctx) {
 	if (!ctx)
 		return -EINVAL;
-	libuboot_lock(ctx);
+
+	int ret = libuboot_lock(ctx);
+	if (ret < 0)
+		return ret;
 
 	return libuboot_load(ctx);
 }

@@ -13,6 +13,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #include "libuboot.h"
 
@@ -159,9 +160,16 @@ int main (int argc, char **argv) {
 		defenvfile = DEFAULT_ENV_FILE;
 
 	if ((ret = libuboot_open(ctx)) < 0) {
-		fprintf(stderr, "Cannot read environment, using default\n");
+		if (is_setenv) {
+			fprintf(stderr, "Cannot %s environment: %s\n",
+				ret == -EBUSY ? "lock" : "read", strerror(errno));
+			exit(ret);
+		}
+		fprintf(stderr, "Cannot %s environment: %s. Using default\n",
+			ret == -EBUSY ? "lock" : "read", strerror(errno));
 		if ((ret = libuboot_load_file(ctx, defenvfile)) < 0) {
-			fprintf(stderr, "Cannot read default environment from file\n");
+			fprintf(stderr, "Cannot read default environment from file: %s\n",
+				strerror(errno));
 			exit (ret);
 		}
 		default_used = true;
