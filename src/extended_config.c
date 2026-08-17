@@ -230,6 +230,11 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 		case YAML_SEQUENCE_START_EVENT:
 			break;
 		case YAML_MAPPING_END_EVENT:
+			if (s->cdev >= 2) {
+				s->error = YAML_BAD_DEVICE;
+				s->event_type = event->type;
+				return FAILURE;
+			}
 			dev = &s->ctx->envdevs[s->cdev];
 			if (check_env_device(dev) < 0) {
 				s->error = YAML_BAD_DEVICE;
@@ -242,6 +247,11 @@ static int consume_event(struct parser_state *s, yaml_event_t *event)
 			s->state = STATE_NAMESPACE_FIELDS;
 			break;
 		case YAML_SCALAR_EVENT:
+			if (s->cdev >= 2) {
+				s->error = YAML_BAD_DEVICE;
+				s->event_type = event->type;
+				return FAILURE;
+			}
 			value = (char *)event->data.scalar.value;
 			if (s->cdev)
 				s->ctx->redundant = true;
