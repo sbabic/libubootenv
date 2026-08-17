@@ -571,17 +571,28 @@ int libuboot_env_store(struct uboot_ctx *ctx)
 	 */
 	if (saveflags) {
 		bool first = true;
+		int len;
 		size = (ctx->size - offsetdata)  - (buf - data);
-		buf += snprintf(buf, size, ".flags=");
+		len = snprintf(buf, size, ".flags=");
+		if (len >= size) {
+			free(image);
+			return -ENOMEM;
+		}
+		buf += len;
 
 		LIST_FOREACH(entry, &ctx->varlist, next) {
 			size = (ctx->size - offsetdata)  - (buf - data);
 			if (entry->type || entry->access) {
-				buf += snprintf(buf, size, "%s%s:%c%c",
+				len = snprintf(buf, size, "%s%s:%c%c",
 						first ? "" : ",",
 						entry->name,
 						attr_tostring(entry->type),
 						access_tostring(entry->access));
+				if (len >= size) {
+					free(image);
+					return -ENOMEM;
+				}
+				buf += len;
 				first = false;
 			}
 		}
